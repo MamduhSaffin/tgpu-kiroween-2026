@@ -5,11 +5,11 @@ export default {
     extend: {
       colors: {
         tgpu: {
-          navy:   '#0A1628',
-          blue:   '#1E3A5F',
-          gold:   '#C9A84C',
-          amber:  '#F0A500',
-          light:  '#EEF2F7',
+          navy:   '#052E25',
+          blue:   '#047857',
+          gold:   '#34D399',
+          amber:  '#10B981',
+          light:  '#F0FDF4',
         },
       },
       fontFamily: {

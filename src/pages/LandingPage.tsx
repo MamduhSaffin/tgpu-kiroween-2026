@@ -4,7 +4,7 @@ import { COMPANIES } from '../data/companies'
 
 const STATS = [
   { label: 'Demo Companies', value: `${COMPANIES.length}+` },
-  { label: 'GCC Countries', value: '6' },
+  { label: 'Demo GCC Markets', value: '6' },
   { label: 'Industry Sectors', value: '10' },
   { label: 'Match Factors', value: '6' },
 ]
@@ -27,7 +27,7 @@ const FEATURES = [
   },
   {
     icon: Globe,
-    title: 'GCC Coverage',
+    title: 'Global Vision, GCC Demo',
     desc: 'UAE, Saudi Arabia, Qatar, Kuwait, Bahrain, and Oman — all six GCC markets in one place.',
   },
   {
@@ -48,15 +48,15 @@ export default function LandingPage() {
   return (
     <div>
       {/* Hero */}
-      <section className="bg-gradient-to-br from-tgpu-navy via-tgpu-blue to-tgpu-navy text-white">
+      <section className="bg-gradient-to-br from-[#022c22] via-[#065f46] to-[#064e3b] text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
           <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 bg-tgpu-gold/20 border border-tgpu-gold/30 rounded-full px-4 py-1.5 text-tgpu-gold text-sm font-medium mb-6">
+            <div className="inline-flex items-center gap-2 bg-emerald-300/10 border border-emerald-300/30 rounded-full px-4 py-1.5 text-tgpu-gold text-sm font-medium mb-6">
               <Zap size={14} /> AWS KiroWeen 2026 Hackathon Prototype
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
-              Connect Malaysian Exporters with{' '}
-              <span className="text-tgpu-gold">GCC Partners</span>
+              Find the right business.{' '}
+              <span className="text-tgpu-gold">Anywhere.</span>
             </h1>
             <p className="text-lg md:text-xl text-gray-300 leading-relaxed mb-8 max-w-2xl mx-auto">
               TGPU GCC Match uses transparent rule-based matching to help Malaysian businesses discover
@@ -100,13 +100,13 @@ export default function LandingPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-3">Everything you need to find the right partner</h2>
             <p className="text-gray-500 max-w-xl mx-auto">
-              Built for the TGPU KiroWeen 2026 hackathon to demonstrate how transparent tooling can accelerate
+              Built as a MatchOS prototype for the KiroWeen 2026 hackathon to demonstrate how transparent tooling can accelerate
               Malaysian export market development.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {FEATURES.map(f => (
-              <div key={f.title} className="p-6 rounded-2xl border border-gray-100 hover:border-tgpu-gold/40 hover:shadow-sm transition-all">
+              <div key={f.title} className="p-6 rounded-2xl border border-gray-100 hover:border-emerald-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-950/5 transition-all duration-200">
                 <div className="w-11 h-11 rounded-xl bg-tgpu-navy flex items-center justify-center mb-4">
                   <f.icon size={20} className="text-tgpu-gold" />
                 </div>
@@ -164,7 +164,7 @@ export default function LandingPage() {
       {/* CTA */}
       <section className="py-16 bg-tgpu-navy text-white">
         <div className="max-w-2xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to find your GCC partner?</h2>
+          <h2 className="text-3xl font-bold mb-4">Your next partnership starts here.</h2>
           <p className="text-gray-400 mb-8 leading-relaxed">
             Register your company profile and let the matching engine surface the most compatible
             distributors, buyers, and strategic partners across the GCC.

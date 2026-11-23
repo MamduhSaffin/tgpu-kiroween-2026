@@ -29,6 +29,14 @@ export type PartnershipType =
   | 'Franchise'
   | 'Direct Import';
 
+export type ExportReadiness = 'Planning' | 'Exporting' | 'Established exporter';
+export type MarketObjective =
+  | 'Distributor Search'
+  | 'Direct Buyers'
+  | 'Joint Venture'
+  | 'OEM / Private Label'
+  | 'Market Research';
+
 export interface Company {
   id: string;
   name: string;
@@ -50,6 +58,9 @@ export interface Company {
   logoInitials: string;
   logoColor: string;
   featured: boolean;
+  exportReadiness?: ExportReadiness;
+  marketObjectives?: MarketObjective[];
+  commercialCapacity?: string;
 }
 
 export const COMPANIES: Company[] = [

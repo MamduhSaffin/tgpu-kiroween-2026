@@ -14,7 +14,7 @@ export default function Footer() {
               <span className="font-bold text-white">TGPU GCC Match</span>
             </div>
             <p className="text-sm leading-relaxed">
-              A KiroWeen 2026 hackathon prototype demonstrating AI-assisted matching between
+              A KiroWeen 2026 hackathon prototype demonstrating rule-based matching between
               Malaysian exporters and GCC distributors.
             </p>
           </div>

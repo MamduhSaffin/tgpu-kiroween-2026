@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
-import { Zap, Info } from 'lucide-react'
+import { Zap, Info, Download, Printer } from 'lucide-react'
 import { COMPANIES } from '../data/companies'
 import type { Company } from '../data/companies'
 import { getCustomCompanies, getShortlist, toggleShortlist } from '../lib/storage'
 import { computeMatches } from '../lib/matcher'
+import type { MatchResult } from '../lib/matcher'
 import MatchCard from '../components/MatchCard'
 import InquiryModal from '../components/InquiryModal'
 
@@ -19,6 +20,8 @@ export default function MatchPage() {
   )
   const [shortlist, setShortlist] = useState<string[]>(getShortlist)
   const [inquireTarget, setInquireTarget] = useState<Company | null>(null)
+  const [gradeFilter, setGradeFilter] = useState<'All' | MatchResult['grade']>('All')
+  const [sortBy, setSortBy] = useState<'score' | 'name' | 'country'>('score')
 
   useEffect(() => {
     const requestedId = searchParams.get('company') ?? preselectedId
@@ -32,9 +35,41 @@ export default function MatchPage() {
     () => (selectedCompany ? computeMatches(selectedCompany, allCompanies) : []),
     [selectedCompany, allCompanies]
   )
+  const visibleMatches = useMemo(() => {
+    const filtered = gradeFilter === 'All' ? [...matches] : matches.filter(match => match.grade === gradeFilter)
+    return filtered.sort((a, b) => {
+      if (sortBy === 'name') return a.company.name.localeCompare(b.company.name)
+      if (sortBy === 'country') return a.company.country.localeCompare(b.company.country)
+      return b.totalScore - a.totalScore || a.company.name.localeCompare(b.company.name)
+    })
+  }, [matches, gradeFilter, sortBy])
 
   function handleToggle(id: string) {
     setShortlist(toggleShortlist(id))
+  }
+
+  function exportSummary() {
+    if (!selectedCompany) return
+    const header = ['Rank', 'Company', 'Country', 'Sector', 'Score', 'Grade', 'Next action']
+    const rows = visibleMatches.map((match, index) => [
+      String(index + 1),
+      match.company.name,
+      match.company.country,
+      match.company.sector,
+      String(match.totalScore),
+      match.grade,
+      match.recommendedNextAction,
+    ])
+    const csv = [header, ...rows]
+      .map(row => row.map(value => `"${value.replace(/"/g, '""')}"`).join(','))
+      .join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `gcc-match-${selectedCompany.id}.csv`
+    anchor.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -130,11 +165,40 @@ export default function MatchPage() {
             <>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                 <p className="text-sm text-gray-500">
-                  <span className="font-medium text-gray-700">{matches.length}</span> potential partners found
+                  <span className="font-medium text-gray-700">{visibleMatches.length}</span> potential partners found
                 </p>
-                <span className="text-xs text-gray-400">Sorted by compatibility score</span>
+                <div className="flex flex-wrap gap-2">
+                  <select
+                    aria-label="Filter matches by grade"
+                    value={gradeFilter}
+                    onChange={e => setGradeFilter(e.target.value as typeof gradeFilter)}
+                    className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white"
+                  >
+                    <option>All</option>
+                    <option>Excellent</option>
+                    <option>Strong</option>
+                    <option>Good</option>
+                    <option>Fair</option>
+                  </select>
+                  <select
+                    aria-label="Sort matches"
+                    value={sortBy}
+                    onChange={e => setSortBy(e.target.value as typeof sortBy)}
+                    className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white"
+                  >
+                    <option value="score">Highest score</option>
+                    <option value="name">Company name</option>
+                    <option value="country">Country</option>
+                  </select>
+                  <button type="button" onClick={exportSummary} className="inline-flex items-center gap-1 border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white hover:bg-gray-50">
+                    <Download size={13} /> Export
+                  </button>
+                  <button type="button" onClick={() => window.print()} className="inline-flex items-center gap-1 border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white hover:bg-gray-50">
+                    <Printer size={13} /> Print
+                  </button>
+                </div>
               </div>
-              {matches.map((result, i) => (
+              {visibleMatches.map((result, i) => (
                 <MatchCard
                   key={result.company.id}
                   result={result}

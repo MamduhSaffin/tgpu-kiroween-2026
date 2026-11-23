@@ -22,9 +22,13 @@ function isStoredCompany(value: unknown): value is Company {
     typeof company.logoColor === 'string' &&
     typeof company.featured === 'boolean' &&
     Array.isArray(company.products) &&
+    company.products.every(item => typeof item === 'string') &&
     Array.isArray(company.partnershipTypes) &&
+    company.partnershipTypes.every(item => typeof item === 'string') &&
     Array.isArray(company.targetMarkets) &&
-    Array.isArray(company.certifications)
+    company.targetMarkets.every(item => typeof item === 'string') &&
+    Array.isArray(company.certifications) &&
+    company.certifications.every(item => typeof item === 'string')
   )
 }
 
@@ -33,15 +37,22 @@ export function getCustomCompanies(): Company[] {
   try {
     const raw = localStorage.getItem(LOCALSTORAGE_KEY_COMPANIES)
     const parsed: unknown = raw ? JSON.parse(raw) : []
-    return Array.isArray(parsed)
-      ? parsed.filter(isStoredCompany)
-      : []
+    if (!Array.isArray(parsed)) return []
+    const valid = parsed.filter(isStoredCompany)
+    const unique = valid.filter((company, index, all) =>
+      all.findIndex(candidate => candidate.id === company.id) === index
+    )
+    if (unique.length !== parsed.length) {
+      localStorage.setItem(LOCALSTORAGE_KEY_COMPANIES, JSON.stringify(unique))
+    }
+    return unique
   } catch {
     return []
   }
 }
 
 export function saveCustomCompany(company: Company): void {
+  if (!isStoredCompany(company)) throw new Error('Invalid company profile.')
   const existing = getCustomCompanies()
   const updated = [...existing.filter(c => c.id !== company.id), company]
   localStorage.setItem(LOCALSTORAGE_KEY_COMPANIES, JSON.stringify(updated))
@@ -52,7 +63,8 @@ export function getShortlist(): string[] {
   try {
     const raw = localStorage.getItem(LOCALSTORAGE_KEY_SHORTLIST)
     const parsed: unknown = raw ? JSON.parse(raw) : []
-    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : []
+    if (!Array.isArray(parsed)) return []
+    return [...new Set(parsed.filter((id): id is string => typeof id === 'string' && id.length > 0))]
   } catch {
     return []
   }
@@ -87,6 +99,7 @@ export function getInquiries(): Inquiry[] {
         typeof inquiry === 'object' &&
         inquiry !== null &&
         typeof (inquiry as Inquiry).id === 'string' &&
+        typeof (inquiry as Inquiry).fromCompanyId === 'string' &&
         typeof (inquiry as Inquiry).toCompanyId === 'string' &&
         typeof (inquiry as Inquiry).message === 'string' &&
         typeof (inquiry as Inquiry).sentAt === 'string'

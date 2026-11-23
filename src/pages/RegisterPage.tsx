@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckCircle, AlertCircle } from 'lucide-react'
 import { saveCustomCompany } from '../lib/storage'
-import type { Company, Sector, Country, PartnershipType, Role } from '../data/companies'
+import type { Company, Sector, Country, PartnershipType, Role, ExportReadiness, MarketObjective } from '../data/companies'
 
 const SECTORS: Sector[] = ['Food & Beverage', 'Palm Oil & Oleochemicals', 'Rubber & Plastics', 'Electronics & Electrical', 'Medical Devices', 'Halal Cosmetics', 'Machinery & Equipment', 'Timber & Furniture', 'Textiles & Apparel', 'Chemicals']
 const COUNTRIES: Country[] = ['Malaysia', 'UAE', 'Saudi Arabia', 'Qatar', 'Kuwait', 'Bahrain', 'Oman']
 const PARTNERSHIP_TYPES: PartnershipType[] = ['Distribution Agreement', 'Joint Venture', 'OEM Supply', 'Agency Representation', 'Strategic Investment', 'Franchise', 'Direct Import']
 const ROLES: Role[] = ['exporter', 'distributor', 'buyer', 'both']
+const READINESS: ExportReadiness[] = ['Planning', 'Exporting', 'Established exporter']
+const OBJECTIVES: MarketObjective[] = ['Distributor Search', 'Direct Buyers', 'Joint Venture', 'OEM / Private Label', 'Market Research']
 const LOGO_COLORS = ['#1E6B4F', '#1565C0', '#C9A84C', '#AD1457', '#6A1B9A', '#00695C', '#4E342E', '#1B5E20', '#0A1628']
 const CURRENT_YEAR = new Date().getFullYear()
 
@@ -29,6 +31,9 @@ const INITIAL_FORM = {
   established: '',
   certifications: '',
   logoColor: LOGO_COLORS[0],
+  exportReadiness: 'Planning' as ExportReadiness,
+  marketObjectives: [] as MarketObjective[],
+  commercialCapacity: '',
 }
 
 export default function RegisterPage() {
@@ -63,6 +68,7 @@ export default function RegisterPage() {
     }
     if (form.partnershipTypes.length === 0) { setError('Select at least one partnership type.'); return }
     if (form.targetMarkets.length === 0) { setError('Select at least one target market.'); return }
+    if (form.marketObjectives.length === 0) { setError('Select at least one market-entry objective.'); return }
     if (form.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contactEmail.trim())) {
       setError('Enter a valid contact email address.'); return
     }
@@ -99,6 +105,9 @@ export default function RegisterPage() {
       logoInitials: initials || '??',
       logoColor: form.logoColor,
       featured: false,
+      exportReadiness: form.exportReadiness,
+      marketObjectives: form.marketObjectives,
+      commercialCapacity: form.commercialCapacity.trim() || 'Not disclosed',
     }
 
     saveCustomCompany(company)
@@ -219,6 +228,38 @@ export default function RegisterPage() {
         </div>
 
         {/* Contact & extras */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+          <h3 className="font-semibold text-gray-800 text-sm uppercase tracking-wide">Market-Entry Readiness</h3>
+          <Field label="Export Readiness *">
+            <select value={form.exportReadiness} onChange={e => set('exportReadiness', e.target.value)} className={INPUT}>
+              {READINESS.map(value => <option key={value}>{value}</option>)}
+            </select>
+          </Field>
+          <Field label="Market-Entry Objectives * (select all that apply)">
+            <div className="flex flex-wrap gap-2">
+              {OBJECTIVES.map(objective => (
+                <button
+                  key={objective}
+                  type="button"
+                  onClick={() => set('marketObjectives', toggleArray(form.marketObjectives, objective))}
+                  aria-pressed={form.marketObjectives.includes(objective)}
+                  className={`text-xs px-3 py-1.5 rounded-full border font-medium ${form.marketObjectives.includes(objective) ? 'bg-tgpu-navy text-white border-tgpu-navy' : 'bg-white text-gray-600 border-gray-200 hover:border-tgpu-navy'}`}
+                >
+                  {objective}
+                </button>
+              ))}
+            </div>
+          </Field>
+          <Field label="Commercial Capacity / Requirements">
+            <input
+              value={form.commercialCapacity}
+              onChange={e => set('commercialCapacity', e.target.value)}
+              className={INPUT}
+              placeholder="e.g. 20-foot container capacity, 30-day lead time"
+            />
+          </Field>
+        </div>
+
         <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
           <h3 className="font-semibold text-gray-800 text-sm uppercase tracking-wide">Contact & Details</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

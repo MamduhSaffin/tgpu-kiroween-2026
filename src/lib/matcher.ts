@@ -26,6 +26,9 @@ export interface MatchResult {
   grade: 'Excellent' | 'Strong' | 'Good' | 'Fair'
   factors: ScoreFactor[]
   summary: string
+  mismatches: string[]
+  marketRelevance: string
+  recommendedNextAction: string
 }
 
 // ── Sector compatibility matrix ──────────────────────────────────────────────
@@ -44,7 +47,7 @@ const SECTOR_AFFINITY: Partial<Record<Sector, Sector[]>> = {
 }
 
 function scoreSector(a: Company, b: Company): ScoreFactor {
-  const MAX = 40
+  const MAX = 30
   if (a.sector === b.sector) {
     return {
       label: 'Sector Match',
@@ -73,7 +76,7 @@ function scoreSector(a: Company, b: Company): ScoreFactor {
 
 // ── Product fit ──────────────────────────────────────────────────────────────
 function scoreProducts(a: Company, b: Company): ScoreFactor {
-  const MAX = 25
+  const MAX = 20
   const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
   const wordsA = new Set(a.products.flatMap(p => normalize(p).split(' ')))
   const wordsB = new Set(b.products.flatMap(p => normalize(p).split(' ')))
@@ -99,7 +102,7 @@ function scoreProducts(a: Company, b: Company): ScoreFactor {
 
 // ── Market overlap ───────────────────────────────────────────────────────────
 function scoreMarkets(a: Company, b: Company): ScoreFactor {
-  const MAX = 20
+  const MAX = 15
   // Find countries that appear in both companies' target market lists
   const setA = new Set<Country>([a.country, ...a.targetMarkets])
   const overlap = [...new Set(b.targetMarkets.filter(m => setA.has(m)))]
@@ -125,7 +128,7 @@ function scoreMarkets(a: Company, b: Company): ScoreFactor {
 
 // ── Partnership alignment ────────────────────────────────────────────────────
 function scorePartnership(a: Company, b: Company): ScoreFactor {
-  const MAX = 15
+  const MAX = 10
   const setA = new Set<PartnershipType>(a.partnershipTypes)
   const common = b.partnershipTypes.filter(p => setA.has(p))
   const score = Math.min(common.length * 7, MAX)
@@ -136,6 +139,42 @@ function scorePartnership(a: Company, b: Company): ScoreFactor {
     return { label: 'Partnership Fit', score, maxScore: MAX, explanation: `Good partnership fit – common type: ${common.join(', ')}.` }
   }
   return { label: 'Partnership Fit', score: 0, maxScore: MAX, explanation: `Different preferred partnership models. Negotiation may be needed.` }
+}
+
+function scoreReadiness(a: Company): ScoreFactor {
+  const MAX = 15
+  const directReadiness = a.exportReadiness === 'Established exporter'
+    ? 15
+    : a.exportReadiness === 'Exporting'
+      ? 11
+      : 7
+  const capacity = a.commercialCapacity?.trim() ? 0 : -3
+  const score = Math.max(4, directReadiness + capacity)
+  return {
+    label: 'Export Readiness',
+    score,
+    maxScore: MAX,
+    explanation: a.exportReadiness
+      ? `${a.name} reports ${a.exportReadiness.toLowerCase()} status${a.commercialCapacity ? ` with capacity: ${a.commercialCapacity}` : ''}.`
+      : 'Export readiness was not specified; verify sample, volume, and delivery capability directly.',
+  }
+}
+
+function scoreCertification(a: Company, b: Company): ScoreFactor {
+  const MAX = 10
+  const required = new Set(a.certifications.map(v => v.toLowerCase()))
+  const common = b.certifications.filter(v => required.has(v.toLowerCase()))
+  const score = common.length > 0 ? Math.min(MAX, 5 + common.length * 2) : (a.certifications.length === 0 ? 5 : 2)
+  return {
+    label: 'Certification Alignment',
+    score,
+    maxScore: MAX,
+    explanation: common.length > 0
+      ? `Shared or comparable certification coverage includes ${common.slice(0, 3).join(', ')}.`
+      : a.certifications.length === 0
+        ? 'Certification requirements are not yet documented.'
+        : 'No explicit certification overlap was identified; each market and product category must be verified.',
+  }
 }
 
 // ── Grade helper ─────────────────────────────────────────────────────────────
@@ -162,6 +201,33 @@ function buildSummary(a: Company, b: Company, total: number, factors: ScoreFacto
   return `${b.name} is a partial match. The two businesses share limited overlap at this time, but may still find complementary value in exploratory discussions.`
 }
 
+function buildMismatches(a: Company, b: Company): string[] {
+  const mismatches: string[] = []
+  if (a.sector !== b.sector) mismatches.push(`Sector profiles differ (${a.sector} vs ${b.sector}).`)
+  if (!a.targetMarkets.includes(b.country)) mismatches.push(`${b.country} is not listed as a direct target market by ${a.name}.`)
+  if (!a.partnershipTypes.some(type => b.partnershipTypes.includes(type))) mismatches.push('Preferred partnership models do not overlap yet.')
+  if (a.certifications.length > 0 && !a.certifications.some(cert => b.certifications.includes(cert))) {
+    mismatches.push('Explicit certification overlap was not identified.')
+  }
+  if (!mismatches.length) mismatches.push('No major listed mismatch; confirm commercial terms and regulatory requirements directly.')
+  return mismatches
+}
+
+function buildMarketRelevance(a: Company, b: Company): string {
+  const direct = a.targetMarkets.includes(b.country)
+  const regional = a.targetMarkets.some(market => market !== 'Malaysia' && b.targetMarkets.includes(market))
+  if (direct) return `${b.country} is a priority target market for ${a.name}; ${b.name} operates locally in that market.`
+  if (regional) return `There is regional GCC overlap, although ${b.country} is not an explicit direct target.`
+  return `The listed market overlap is limited; validate the GCC route and local demand before advancing.`
+}
+
+function buildNextAction(total: number): string {
+  if (total >= 80) return 'Arrange a structured discovery call; verify product fit, volumes, commercial terms, and applicable market requirements.'
+  if (total >= 60) return 'Qualify the opportunity with a short capability and market-request briefing before committing resources.'
+  if (total >= 40) return 'Use exploratory outreach to clarify the sector, partnership model, and certification gaps.'
+  return 'Treat this as a low-priority lead until direct market demand and a workable partnership model are confirmed.'
+}
+
 // ── Main export ──────────────────────────────────────────────────────────────
 export function computeMatches(source: Company, candidates: Company[]): MatchResult[] {
   // Exclude self; optionally exclude same-country same-role (exporter ↔ exporter not useful)
@@ -178,14 +244,22 @@ export function computeMatches(source: Company, candidates: Company[]): MatchRes
       const f2 = scoreProducts(source, candidate)
       const f3 = scoreMarkets(source, candidate)
       const f4 = scorePartnership(source, candidate)
-      const factors = [f1, f2, f3, f4]
+      const f5 = scoreReadiness(source)
+      const f6 = scoreCertification(source, candidate)
+      const factors = [f1, f2, f3, f4, f5, f6]
       const total = factors.reduce((s, f) => s + f.score, 0)
+      const mismatches = buildMismatches(source, candidate)
+      const marketRelevance = buildMarketRelevance(source, candidate)
+      const recommendedNextAction = buildNextAction(total)
       return {
         company: candidate,
         totalScore: total,
         grade: grade(total),
         factors,
         summary: buildSummary(source, candidate, total, factors),
+        mismatches,
+        marketRelevance,
+        recommendedNextAction,
       } satisfies MatchResult
     })
     .sort((a, b) => b.totalScore - a.totalScore || a.company.name.localeCompare(b.company.name))

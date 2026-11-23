@@ -34,7 +34,7 @@ Open `http://localhost:5173` (or the Codespaces forwarded URL — see below).
 |---|---|
 | Landing page | Hero, stats, featured companies, CTA |
 | Company directory | 16 fictional companies; searchable and filterable by country, sector, role, products, and descriptions |
-| AI-assisted matching | Weighted rule engine scores every candidate 0–100 with a per-factor breakdown |
+| Rule-based matching | Weighted engine scores every candidate 0–100 with an explainable six-factor breakdown |
 | Match explanations | Each recommendation includes a plain-language explanation of *why* it matches |
 | Company profiles | Full detail pages: about, products, certifications, contact, top matches |
 | Partnership enquiry | In-app enquiry form saved to localStorage (demo only — no email sent) |
@@ -156,6 +156,8 @@ Kiro operates within the repository only — no external deployments, no paid se
 npm run dev       # Start dev server on 0.0.0.0:5173
 npm run build     # TypeScript check + production build to dist/
 npm run preview   # Serve the production build locally on 0.0.0.0:4173
+npm run typecheck # TypeScript validation
+npm test          # Vitest unit tests
 ```
 
 `npm run build` is the project validation command. The project intentionally avoids a separate

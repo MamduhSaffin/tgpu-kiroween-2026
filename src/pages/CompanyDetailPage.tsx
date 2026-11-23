@@ -200,7 +200,7 @@ export default function CompanyDetailPage() {
       </div>
 
       {inquireTarget && (
-        <InquiryModal from={null} to={inquireTarget} onClose={() => setInquireTarget(null)} />
+        <InquiryModal from={company} to={inquireTarget} onClose={() => setInquireTarget(null)} />
       )}
     </div>
   )

@@ -91,6 +91,34 @@ export default function DashboardPage() {
       </section>
 
       {/* Enquiries */}
+      {shortlisted.length >= 2 && (
+        <section className="mb-10">
+          <h2 className="font-semibold text-gray-800 mb-4">Shortlist Comparison</h2>
+          <div className="overflow-x-auto bg-white rounded-2xl border border-gray-100">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left border-b border-gray-100">
+                  <th className="p-4 font-medium text-gray-600">Candidate</th>
+                  <th className="p-4 font-medium text-gray-600">Market</th>
+                  <th className="p-4 font-medium text-gray-600">Sector</th>
+                  <th className="p-4 font-medium text-gray-600">Partnership types</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shortlisted.map(company => (
+                  <tr key={company.id} className="border-b border-gray-50 last:border-0">
+                    <td className="p-4 font-medium text-gray-900">{company.name}</td>
+                    <td className="p-4 text-gray-600">{company.country}</td>
+                    <td className="p-4 text-gray-600">{company.sector}</td>
+                    <td className="p-4 text-gray-600">{company.partnershipTypes.join(', ')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
       <section className="mb-10">
         <h2 className="font-semibold text-gray-800 flex items-center gap-2 mb-4">
           <MessageSquare size={18} className="text-blue-500" /> Sent Enquiries

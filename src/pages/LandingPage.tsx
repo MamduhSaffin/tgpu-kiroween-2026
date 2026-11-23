@@ -6,19 +6,19 @@ const STATS = [
   { label: 'Demo Companies', value: `${COMPANIES.length}+` },
   { label: 'GCC Countries', value: '6' },
   { label: 'Industry Sectors', value: '10' },
-  { label: 'Match Factors', value: '4' },
+  { label: 'Match Factors', value: '6' },
 ]
 
 const FEATURES = [
   {
     icon: Search,
-    title: 'Smart Discovery',
+    title: 'Partner Discovery',
     desc: 'Search and filter Malaysian exporters and GCC buyers by sector, country, and partnership type.',
   },
   {
     icon: Zap,
-    title: 'Rule-Based Matching',
-    desc: 'A transparent weighted-rule engine scores compatibility across four factors and explains every recommendation.',
+    title: 'Transparent Matching',
+    desc: 'A transparent weighted-rule engine scores compatibility across six factors and explains every recommendation.',
   },
   {
     icon: BarChart3,
@@ -59,7 +59,7 @@ export default function LandingPage() {
               <span className="text-tgpu-gold">GCC Partners</span>
             </h1>
             <p className="text-lg md:text-xl text-gray-300 leading-relaxed mb-8 max-w-2xl mx-auto">
-              TGPU GCC Match uses AI-assisted matching to help Malaysian businesses discover
+              TGPU GCC Match uses transparent rule-based matching to help Malaysian businesses discover
               distributors, buyers, and strategic partners across the Gulf Cooperation Council.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -100,7 +100,7 @@ export default function LandingPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-3">Everything you need to find the right partner</h2>
             <p className="text-gray-500 max-w-xl mx-auto">
-              Built for the TGPU KiroWeen 2026 hackathon to demonstrate how AI-assisted tooling can accelerate
+              Built for the TGPU KiroWeen 2026 hackathon to demonstrate how transparent tooling can accelerate
               Malaysian export market development.
             </p>
           </div>

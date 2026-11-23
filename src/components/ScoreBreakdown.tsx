@@ -71,6 +71,18 @@ export default function ScoreBreakdown({ result, expanded = false }: Props) {
               </div>
             )
           })}
+          <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 space-y-2">
+            <p className="text-xs text-gray-700"><strong>GCC relevance:</strong> {result.marketRelevance}</p>
+            {result.mismatches.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-gray-700">Potential mismatches</p>
+                <ul className="mt-1 list-disc pl-4 space-y-0.5">
+                  {result.mismatches.map(item => <li key={item} className="text-xs text-gray-500">{item}</li>)}
+                </ul>
+              </div>
+            )}
+            <p className="text-xs text-gray-700"><strong>Recommended next action:</strong> {result.recommendedNextAction}</p>
+          </div>
         </div>
       )}
 

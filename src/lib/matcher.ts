@@ -53,8 +53,9 @@ function scoreSector(a: Company, b: Company): ScoreFactor {
       explanation: `Both operate in ${a.sector} – direct sector alignment.`,
     }
   }
-  const affines = SECTOR_AFFINITY[a.sector] ?? []
-  if (affines.includes(b.sector)) {
+  const affinityA = SECTOR_AFFINITY[a.sector] ?? []
+  const affinityB = SECTOR_AFFINITY[b.sector] ?? []
+  if (affinityA.includes(b.sector) || affinityB.includes(a.sector)) {
     return {
       label: 'Sector Match',
       score: 20,
@@ -73,7 +74,7 @@ function scoreSector(a: Company, b: Company): ScoreFactor {
 // ── Product fit ──────────────────────────────────────────────────────────────
 function scoreProducts(a: Company, b: Company): ScoreFactor {
   const MAX = 25
-  const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9 ]/g, '')
+  const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
   const wordsA = new Set(a.products.flatMap(p => normalize(p).split(' ')))
   const wordsB = new Set(b.products.flatMap(p => normalize(p).split(' ')))
   const stopwords = new Set(['and', 'for', 'of', 'the', 'in', 'a', 'an', '&'])
@@ -101,7 +102,7 @@ function scoreMarkets(a: Company, b: Company): ScoreFactor {
   const MAX = 20
   // Find countries that appear in both companies' target market lists
   const setA = new Set<Country>([a.country, ...a.targetMarkets])
-  const overlap = b.targetMarkets.filter(m => setA.has(m))
+  const overlap = [...new Set(b.targetMarkets.filter(m => setA.has(m)))]
   // Also check that b operates in a market a is targeting
   const directHit = a.targetMarkets.includes(b.country)
 
@@ -187,5 +188,5 @@ export function computeMatches(source: Company, candidates: Company[]): MatchRes
         summary: buildSummary(source, candidate, total, factors),
       } satisfies MatchResult
     })
-    .sort((a, b) => b.totalScore - a.totalScore)
+    .sort((a, b) => b.totalScore - a.totalScore || a.company.name.localeCompare(b.company.name))
 }

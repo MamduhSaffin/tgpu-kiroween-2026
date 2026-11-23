@@ -9,31 +9,35 @@ const COUNTRIES: Country[] = ['Malaysia', 'UAE', 'Saudi Arabia', 'Qatar', 'Kuwai
 const PARTNERSHIP_TYPES: PartnershipType[] = ['Distribution Agreement', 'Joint Venture', 'OEM Supply', 'Agency Representation', 'Strategic Investment', 'Franchise', 'Direct Import']
 const ROLES: Role[] = ['exporter', 'distributor', 'buyer', 'both']
 const LOGO_COLORS = ['#1E6B4F', '#1565C0', '#C9A84C', '#AD1457', '#6A1B9A', '#00695C', '#4E342E', '#1B5E20', '#0A1628']
+const CURRENT_YEAR = new Date().getFullYear()
+
+const INITIAL_FORM = {
+  name: '',
+  tagline: '',
+  role: 'exporter' as Role,
+  sector: 'Food & Beverage' as Sector,
+  country: 'Malaysia' as Country,
+  city: '',
+  products: '',
+  partnershipTypes: [] as PartnershipType[],
+  targetMarkets: [] as Country[],
+  description: '',
+  contactName: '',
+  contactEmail: '',
+  annualRevenue: '',
+  employees: '',
+  established: '',
+  certifications: '',
+  logoColor: LOGO_COLORS[0],
+}
 
 export default function RegisterPage() {
   const navigate = useNavigate()
   const [saved, setSaved] = useState(false)
+  const [savedCompanyId, setSavedCompanyId] = useState('')
   const [error, setError] = useState('')
 
-  const [form, setForm] = useState({
-    name: '',
-    tagline: '',
-    role: 'exporter' as Role,
-    sector: 'Food & Beverage' as Sector,
-    country: 'Malaysia' as Country,
-    city: '',
-    products: '',
-    partnershipTypes: [] as PartnershipType[],
-    targetMarkets: [] as Country[],
-    description: '',
-    contactName: '',
-    contactEmail: '',
-    annualRevenue: '',
-    employees: '',
-    established: '',
-    certifications: '',
-    logoColor: LOGO_COLORS[0],
-  })
+  const [form, setForm] = useState(INITIAL_FORM)
 
   function set(field: string, value: unknown) {
     setForm(f => ({ ...f, [field]: value }))
@@ -47,10 +51,30 @@ export default function RegisterPage() {
     e.preventDefault()
     setError('')
     if (!form.name.trim()) { setError('Company name is required.'); return }
+    if (form.name.trim().length < 2 || form.name.trim().length > 120) {
+      setError('Company name must be between 2 and 120 characters.'); return
+    }
     if (!form.city.trim()) { setError('City is required.'); return }
-    if (!form.products.trim()) { setError('Please list at least one product.'); return }
+    if (form.city.trim().length > 80) { setError('City must be 80 characters or fewer.'); return }
+    const products = form.products.split(',').map(s => s.trim()).filter(Boolean)
+    if (products.length === 0) { setError('Please list at least one product.'); return }
+    if (products.length > 20 || products.some(product => product.length > 80)) {
+      setError('List up to 20 products, with each product no longer than 80 characters.'); return
+    }
     if (form.partnershipTypes.length === 0) { setError('Select at least one partnership type.'); return }
     if (form.targetMarkets.length === 0) { setError('Select at least one target market.'); return }
+    if (form.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contactEmail.trim())) {
+      setError('Enter a valid contact email address.'); return
+    }
+    if (form.established) {
+      const year = Number(form.established)
+      if (!Number.isInteger(year) || year < 1800 || year > CURRENT_YEAR) {
+        setError(`Established year must be between 1800 and ${CURRENT_YEAR}.`); return
+      }
+    }
+    if (form.employees && (!/^\d+$/.test(form.employees.trim()) || Number(form.employees) < 1)) {
+      setError('Employees must be a positive whole number.'); return
+    }
 
     const initials = form.name.trim().split(' ').slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('')
 
@@ -60,7 +84,7 @@ export default function RegisterPage() {
       tagline: form.tagline.trim() || `${form.sector} ${form.role} based in ${form.city}`,
       role: form.role,
       sector: form.sector,
-      products: form.products.split(',').map(s => s.trim()).filter(Boolean),
+      products,
       country: form.country,
       city: form.city.trim(),
       partnershipTypes: form.partnershipTypes,
@@ -78,6 +102,7 @@ export default function RegisterPage() {
     }
 
     saveCustomCompany(company)
+    setSavedCompanyId(company.id)
     setSaved(true)
   }
 
@@ -89,13 +114,13 @@ export default function RegisterPage() {
         <p className="text-gray-500 mb-6">Your company profile has been saved to localStorage and will appear in the directory and matching engine.</p>
         <div className="flex gap-3 justify-center">
           <button
-            onClick={() => navigate('/match')}
+            onClick={() => navigate(`/match?company=${encodeURIComponent(savedCompanyId)}`)}
             className="px-6 py-3 bg-tgpu-navy text-white font-semibold rounded-xl hover:bg-tgpu-blue transition-colors"
           >
             Find My Matches
           </button>
           <button
-            onClick={() => { setSaved(false); setForm(f => ({ ...f, name: '' })) }}
+            onClick={() => { setSaved(false); setError(''); setForm(INITIAL_FORM) }}
             className="px-6 py-3 border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors"
           >
             Register Another
@@ -117,7 +142,7 @@ export default function RegisterPage() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 text-sm text-red-700 flex items-center gap-2">
+        <div role="alert" className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4 text-sm text-red-700 flex items-center gap-2">
           <AlertCircle size={16} /> {error}
         </div>
       )}
@@ -132,7 +157,7 @@ export default function RegisterPage() {
           <Field label="Tagline">
             <input value={form.tagline} onChange={e => set('tagline', e.target.value)} className={INPUT} placeholder="One-sentence description of your business" />
           </Field>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Role *">
               <select value={form.role} onChange={e => set('role', e.target.value)} className={INPUT}>
                 {ROLES.map(r => <option key={r} value={r} className="capitalize">{r}</option>)}
@@ -144,7 +169,7 @@ export default function RegisterPage() {
               </select>
             </Field>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Country *">
               <select value={form.country} onChange={e => set('country', e.target.value)} className={INPUT}>
                 {COUNTRIES.map(c => <option key={c}>{c}</option>)}
@@ -196,7 +221,7 @@ export default function RegisterPage() {
         {/* Contact & extras */}
         <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
           <h3 className="font-semibold text-gray-800 text-sm uppercase tracking-wide">Contact & Details</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Contact Name">
               <input value={form.contactName} onChange={e => set('contactName', e.target.value)} className={INPUT} placeholder="Full name" />
             </Field>
@@ -204,7 +229,7 @@ export default function RegisterPage() {
               <input type="email" value={form.contactEmail} onChange={e => set('contactEmail', e.target.value)} className={INPUT} placeholder="email@company.com" />
             </Field>
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Field label="Annual Revenue">
               <input value={form.annualRevenue} onChange={e => set('annualRevenue', e.target.value)} className={INPUT} placeholder="e.g. RM 50M" />
             </Field>
@@ -224,6 +249,8 @@ export default function RegisterPage() {
                 <button
                   key={c} type="button"
                   onClick={() => set('logoColor', c)}
+                  aria-label={`Choose logo colour ${c}`}
+                  aria-pressed={form.logoColor === c}
                   style={{ backgroundColor: c }}
                   className={`w-8 h-8 rounded-lg transition-transform ${form.logoColor === c ? 'ring-2 ring-offset-2 ring-tgpu-gold scale-110' : 'hover:scale-105'}`}
                 />

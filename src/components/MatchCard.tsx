@@ -45,7 +45,9 @@ export default function MatchCard({ result, rank, shortlisted, onToggleShortlist
                 {company.name}
               </Link>
               <button
+                type="button"
                 onClick={() => onToggleShortlist(company.id)}
+                aria-label={shortlisted ? `Remove ${company.name} from shortlist` : `Add ${company.name} to shortlist`}
                 className={clsx(
                   'flex-shrink-0 p-1.5 rounded-lg transition-colors',
                   shortlisted ? 'text-tgpu-gold bg-amber-50' : 'text-gray-400 hover:text-tgpu-gold hover:bg-amber-50'

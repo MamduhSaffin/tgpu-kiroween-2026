@@ -33,7 +33,7 @@ Open `http://localhost:5173` (or the Codespaces forwarded URL — see below).
 | Feature | Detail |
 |---|---|
 | Landing page | Hero, stats, featured companies, CTA |
-| Company directory | 16 fictional companies; searchable and filterable by country, sector, and role |
+| Company directory | 16 fictional companies; searchable and filterable by country, sector, role, products, and descriptions |
 | AI-assisted matching | Weighted rule engine scores every candidate 0–100 with a per-factor breakdown |
 | Match explanations | Each recommendation includes a plain-language explanation of *why* it matches |
 | Company profiles | Full detail pages: about, products, certifications, contact, top matches |
@@ -77,7 +77,7 @@ tgpu-kiroween-2026/
 └── package.json
 ```
 
-**Tech stack:** React 18 · Vite 5 · TypeScript 5 · Tailwind CSS 3 · React Router 6 · Lucide React
+**Tech stack:** React 18 · Vite 5 · TypeScript 5 · Tailwind CSS 3 · React Router 7 · Lucide React
 
 ---
 
@@ -94,7 +94,7 @@ The engine is a **transparent weighted-rule system** — not a trained machine-l
 
 **Grade bands:** Excellent ≥ 80 · Strong ≥ 60 · Good ≥ 40 · Fair < 40
 
-Exporter-to-exporter and distributor-to-distributor matches are excluded from results (the engine pairs complementary roles).
+Same-role matches are excluded from results (the engine pairs complementary roles). Scores are directional because market fit is evaluated from the selected company's target markets.
 
 ---
 
@@ -117,6 +117,8 @@ User-registered companies are stored in `localStorage` under key `tgpu_gcc_match
 - **No backend.** All data lives in the browser. Clearing localStorage resets shortlists, enquiries, and registered profiles.
 - **No authentication.** Anyone using the same browser can see the same localStorage data.
 - **No email delivery.** The enquiry form stores messages locally only.
+- **Demo reset.** Use **Dashboard → Reset demo data** to clear registered profiles, shortlists, and enquiries before a presentation.
+- **Client-only routing.** The selected matching profile is stored in the URL so a match view can be refreshed or shared within the same demo.
 
 ---
 
@@ -155,3 +157,6 @@ npm run dev       # Start dev server on 0.0.0.0:5173
 npm run build     # TypeScript check + production build to dist/
 npm run preview   # Serve the production build locally on 0.0.0.0:4173
 ```
+
+`npm run build` is the project validation command. The project intentionally avoids a separate
+lint dependency to keep the hackathon prototype lightweight.

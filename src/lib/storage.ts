@@ -1,11 +1,41 @@
 import { LOCALSTORAGE_KEY_COMPANIES, LOCALSTORAGE_KEY_SHORTLIST, LOCALSTORAGE_KEY_INQUIRIES } from '../data/companies'
 import type { Company } from '../data/companies'
 
+function isStoredCompany(value: unknown): value is Company {
+  if (typeof value !== 'object' || value === null) return false
+  const company = value as Partial<Company>
+  return (
+    typeof company.id === 'string' &&
+    typeof company.name === 'string' &&
+    typeof company.tagline === 'string' &&
+    typeof company.role === 'string' &&
+    typeof company.sector === 'string' &&
+    typeof company.country === 'string' &&
+    typeof company.city === 'string' &&
+    typeof company.annualRevenue === 'string' &&
+    typeof company.employees === 'string' &&
+    typeof company.established === 'number' &&
+    typeof company.description === 'string' &&
+    typeof company.contactName === 'string' &&
+    typeof company.contactEmail === 'string' &&
+    typeof company.logoInitials === 'string' &&
+    typeof company.logoColor === 'string' &&
+    typeof company.featured === 'boolean' &&
+    Array.isArray(company.products) &&
+    Array.isArray(company.partnershipTypes) &&
+    Array.isArray(company.targetMarkets) &&
+    Array.isArray(company.certifications)
+  )
+}
+
 // ── Custom companies ─────────────────────────────────────────────────────────
 export function getCustomCompanies(): Company[] {
   try {
     const raw = localStorage.getItem(LOCALSTORAGE_KEY_COMPANIES)
-    return raw ? (JSON.parse(raw) as Company[]) : []
+    const parsed: unknown = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed)
+      ? parsed.filter(isStoredCompany)
+      : []
   } catch {
     return []
   }
@@ -21,7 +51,8 @@ export function saveCustomCompany(company: Company): void {
 export function getShortlist(): string[] {
   try {
     const raw = localStorage.getItem(LOCALSTORAGE_KEY_SHORTLIST)
-    return raw ? (JSON.parse(raw) as string[]) : []
+    const parsed: unknown = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : []
   } catch {
     return []
   }
@@ -50,7 +81,17 @@ export interface Inquiry {
 export function getInquiries(): Inquiry[] {
   try {
     const raw = localStorage.getItem(LOCALSTORAGE_KEY_INQUIRIES)
-    return raw ? (JSON.parse(raw) as Inquiry[]) : []
+    const parsed: unknown = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed)
+      ? parsed.filter((inquiry): inquiry is Inquiry => (
+        typeof inquiry === 'object' &&
+        inquiry !== null &&
+        typeof (inquiry as Inquiry).id === 'string' &&
+        typeof (inquiry as Inquiry).toCompanyId === 'string' &&
+        typeof (inquiry as Inquiry).message === 'string' &&
+        typeof (inquiry as Inquiry).sentAt === 'string'
+      ))
+      : []
   } catch {
     return []
   }
@@ -65,4 +106,10 @@ export function saveInquiry(inquiry: Omit<Inquiry, 'id' | 'sentAt'>): Inquiry {
   }
   localStorage.setItem(LOCALSTORAGE_KEY_INQUIRIES, JSON.stringify([...existing, full]))
   return full
+}
+
+export function clearDemoData(): void {
+  localStorage.removeItem(LOCALSTORAGE_KEY_COMPANIES)
+  localStorage.removeItem(LOCALSTORAGE_KEY_SHORTLIST)
+  localStorage.removeItem(LOCALSTORAGE_KEY_INQUIRIES)
 }

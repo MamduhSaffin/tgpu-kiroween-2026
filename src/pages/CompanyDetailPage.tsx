@@ -189,7 +189,7 @@ export default function CompanyDetailPage() {
                 ))}
               </div>
               <button
-                onClick={() => navigate('/match', { state: { companyId: company.id } })}
+                onClick={() => navigate(`/match?company=${encodeURIComponent(company.id)}`)}
                 className="mt-3 w-full py-2 text-xs font-medium text-tgpu-blue hover:bg-blue-50 rounded-xl transition-colors"
               >
                 See all matches →

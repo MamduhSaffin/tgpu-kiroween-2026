@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { Zap, Info } from 'lucide-react'
 import { COMPANIES } from '../data/companies'
 import type { Company } from '../data/companies'
@@ -10,16 +10,22 @@ import InquiryModal from '../components/InquiryModal'
 
 export default function MatchPage() {
   const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const preselectedId = (location.state as { companyId?: string } | null)?.companyId
 
   const allCompanies = useMemo(() => [...COMPANIES, ...getCustomCompanies()], [])
-  const [selectedId, setSelectedId] = useState<string>(preselectedId ?? allCompanies[0]?.id ?? '')
+  const [selectedId, setSelectedId] = useState<string>(
+    searchParams.get('company') ?? preselectedId ?? allCompanies[0]?.id ?? ''
+  )
   const [shortlist, setShortlist] = useState<string[]>(getShortlist)
   const [inquireTarget, setInquireTarget] = useState<Company | null>(null)
 
   useEffect(() => {
-    if (preselectedId) setSelectedId(preselectedId)
-  }, [preselectedId])
+    const requestedId = searchParams.get('company') ?? preselectedId
+    if (requestedId && allCompanies.some(company => company.id === requestedId)) {
+      setSelectedId(requestedId)
+    }
+  }, [allCompanies, preselectedId, searchParams])
 
   const selectedCompany = allCompanies.find(c => c.id === selectedId) ?? null
   const matches = useMemo(
@@ -59,7 +65,11 @@ export default function MatchPage() {
             <h2 className="font-semibold text-gray-800 mb-3 text-sm uppercase tracking-wide">Select Company</h2>
             <select
               value={selectedId}
-              onChange={e => setSelectedId(e.target.value)}
+              onChange={e => {
+                const id = e.target.value
+                setSelectedId(id)
+                setSearchParams({ company: id })
+              }}
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-tgpu-navy/20 bg-white mb-4"
             >
               {allCompanies.map(c => (
@@ -118,7 +128,7 @@ export default function MatchPage() {
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                 <p className="text-sm text-gray-500">
                   <span className="font-medium text-gray-700">{matches.length}</span> potential partners found
                 </p>

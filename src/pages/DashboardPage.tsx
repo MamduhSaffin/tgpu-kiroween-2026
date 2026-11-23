@@ -1,20 +1,28 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Bookmark, Send, BarChart3, Users, MessageSquare, Zap } from 'lucide-react'
+import { Bookmark, Send, BarChart3, Users, MessageSquare, Zap, Trash2 } from 'lucide-react'
 import { COMPANIES } from '../data/companies'
-import { getCustomCompanies, getShortlist, toggleShortlist, getInquiries } from '../lib/storage'
+import { clearDemoData, getCustomCompanies, getShortlist, toggleShortlist, getInquiries } from '../lib/storage'
 import CompanyCard from '../components/CompanyCard'
 
 export default function DashboardPage() {
   const [shortlist, setShortlist] = useState<string[]>(getShortlist)
-  const inquiries = getInquiries()
-  const allCompanies = useMemo(() => [...COMPANIES, ...getCustomCompanies()], [])
+  const [inquiries, setInquiries] = useState(getInquiries)
+  const [customCompanies, setCustomCompanies] = useState(getCustomCompanies)
+  const allCompanies = useMemo(() => [...COMPANIES, ...customCompanies], [customCompanies])
 
   const shortlisted = allCompanies.filter(c => shortlist.includes(c.id))
-  const customCompanies = getCustomCompanies()
 
   function handleToggle(id: string) {
     setShortlist(toggleShortlist(id))
+  }
+
+  function handleReset() {
+    if (!window.confirm('Reset all local demo data, including profiles, shortlists, and enquiries?')) return
+    clearDemoData()
+    setShortlist([])
+    setInquiries([])
+    setCustomCompanies([])
   }
 
   const stats = [
@@ -27,8 +35,19 @@ export default function DashboardPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Your Dashboard</h1>
-        <p className="text-gray-500 text-sm mt-1">Shortlisted partners, sent enquiries, and registered profiles — all stored locally.</p>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Your Dashboard</h1>
+            <p className="text-gray-500 text-sm mt-1">Shortlisted partners, sent enquiries, and registered profiles — all stored locally.</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleReset}
+            className="inline-flex items-center justify-center gap-2 self-start px-3 py-2 rounded-xl border border-red-200 text-red-700 text-sm font-medium hover:bg-red-50 transition-colors"
+          >
+            <Trash2 size={14} /> Reset demo data
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -151,7 +170,7 @@ export default function DashboardPage() {
           <h3 className="font-semibold text-lg flex items-center gap-2">
             <Zap size={18} className="text-tgpu-gold" /> Ready to find more partners?
           </h3>
-          <p className="text-gray-300 text-sm mt-1">Run the matching engine against all 16 demo companies.</p>
+          <p className="text-gray-300 text-sm mt-1">Run the matching engine against all {allCompanies.length} companies.</p>
         </div>
         <Link
           to="/match"

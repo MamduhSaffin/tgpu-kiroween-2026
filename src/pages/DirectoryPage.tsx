@@ -27,7 +27,13 @@ export default function DirectoryPage() {
       if (country !== 'All' && c.country !== country) return false
       if (role !== 'All' && c.role !== role) return false
       if (sector !== 'All' && c.sector !== sector) return false
-      if (q && !c.name.toLowerCase().includes(q) && !c.sector.toLowerCase().includes(q) && !c.tagline.toLowerCase().includes(q)) return false
+      if (q && ![
+        c.name,
+        c.sector,
+        c.tagline,
+        c.description,
+        ...c.products,
+      ].some(value => value.toLowerCase().includes(q))) return false
       return true
     })
   }, [allCompanies, query, country, role, sector])
@@ -37,7 +43,7 @@ export default function DirectoryPage() {
   }
 
   function handleMatch(company: Company) {
-    navigate('/match', { state: { companyId: company.id } })
+    navigate(`/match?company=${encodeURIComponent(company.id)}`)
   }
 
   const hasFilters = country !== 'All' || role !== 'All' || sector !== 'All' || query !== ''
@@ -60,7 +66,7 @@ export default function DirectoryPage() {
       </div>
 
       {/* Search + filter toggle */}
-      <div className="flex gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -71,6 +77,7 @@ export default function DirectoryPage() {
           />
         </div>
         <button
+          type="button"
           onClick={() => setShowFilters(f => !f)}
           className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors bg-white"
         >
@@ -80,6 +87,7 @@ export default function DirectoryPage() {
         </button>
         {hasFilters && (
           <button
+            type="button"
             onClick={clearFilters}
             className="flex items-center gap-1 px-3 py-2.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
           >

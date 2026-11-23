@@ -15,3 +15,13 @@
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 }
+
+@layer base {
+  ::selection { background: #a7f3d0; color: #064e3b; }
+  body { background-image: radial-gradient(ellipse at 90% 0%, rgba(16,185,129,.045), transparent 35%); }
+  a, button { -webkit-tap-highlight-color: transparent; }
+  :focus-visible { outline: 3px solid #10b981; outline-offset: 3px; }
+}
+@layer components {
+  .matchos-card { @apply rounded-2xl border border-emerald-100 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-950/5; }
+}

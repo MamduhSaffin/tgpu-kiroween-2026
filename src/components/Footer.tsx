@@ -11,10 +11,10 @@ export default function Footer() {
               <div className="w-8 h-8 rounded-lg bg-tgpu-gold flex items-center justify-center">
                 <Zap size={16} className="text-tgpu-navy" />
               </div>
-              <span className="font-bold text-white">TGPU GCC Match</span>
+              <span className="font-bold text-white">MatchOS AI</span>
             </div>
             <p className="text-sm leading-relaxed">
-              A KiroWeen 2026 hackathon prototype demonstrating rule-based matching between
+              A TGPU Legacy demonstration of rule-based matching between
               Malaysian exporters and GCC distributors.
             </p>
           </div>
@@ -37,7 +37,7 @@ export default function Footer() {
         </div>
         <div className="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs">
           <p>© 2026 TGPU GCC Match – AWS KiroWeen 2026 Prototype</p>
-          <p className="text-tgpu-gold font-medium">Built with Kiro CLI · React · Vite · Tailwind CSS</p>
+          <p className="text-tgpu-gold font-medium">Built with React · Vite · Tailwind CSS</p>
         </div>
       </div>
     </footer>

@@ -52,14 +52,14 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
           <div className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-emerald-300/10 border border-emerald-300/30 rounded-full px-4 py-1.5 text-tgpu-gold text-sm font-medium mb-6">
-              <Zap size={14} /> AWS KiroWeen 2026 Hackathon Prototype
+              <Zap size={14} /> TGPU Legacy · International Business Matching
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
               Find the right business.{' '}
               <span className="text-tgpu-gold">Anywhere.</span>
             </h1>
             <p className="text-lg md:text-xl text-gray-300 leading-relaxed mb-8 max-w-2xl mx-auto">
-              TGPU GCC Match uses transparent rule-based matching to help Malaysian businesses discover
+              MatchOS AI uses transparent rule-based matching to help Malaysian businesses discover
               distributors, buyers, and strategic partners across the Gulf Cooperation Council.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -100,7 +100,7 @@ export default function LandingPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-3">Everything you need to find the right partner</h2>
             <p className="text-gray-500 max-w-xl mx-auto">
-              Built as a MatchOS prototype for the KiroWeen 2026 hackathon to demonstrate how transparent tooling can accelerate
+              Built by TGPU Legacy to demonstrate how transparent business matching can support
               Malaysian export market development.
             </p>
           </div>

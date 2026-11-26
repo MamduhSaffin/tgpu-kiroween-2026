@@ -1,4 +1,3 @@
-import { Zap } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 export default function Footer() {
@@ -8,10 +7,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-tgpu-gold flex items-center justify-center">
-                <Zap size={16} className="text-tgpu-navy" />
-              </div>
-              <span className="font-bold text-white">MatchOS AI</span>
+              <img src="https://raw.githubusercontent.com/MamduhSaffin/tgpugulf-match-os/16e181e583715698bea9b545efb0541f1345e396/public/gulf-advisory-logo.webp" alt="TGPU Gulf Advisory" className="w-10 h-10 object-contain bg-white rounded-lg p-1" />
+              <span className="font-bold text-white">MatchOS</span>
             </div>
             <p className="text-sm leading-relaxed">
               A TGPU Legacy demonstration of rule-based matching between
@@ -36,7 +33,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs">
-          <p>© 2026 TGPU GCC Match – AWS KiroWeen 2026 Prototype</p>
+          <p>© 2026 MatchOS – AWS KiroWeen 2026 Prototype</p>
           <p className="text-tgpu-gold font-medium">Built with React · Vite · Tailwind CSS</p>
         </div>
       </div>

@@ -170,6 +170,6 @@ npm run test:browser # Run browser tests against the built Worker
 
 ## Deployment and rollback
 
-Cloudflare Workers Builds watches `main` for the existing `tgpu-kiroween-2026` Worker. It runs `npm run build` and then deploys the compiled assets with the checked-in Wrangler configuration. The Worker serves the SPA and needs no environment variables or database bindings. The existing Pages deployment also serves this repository.
+Cloudflare Workers Builds watches `main` for the existing `tgpu-kiroween-2026` Worker. It runs `npm run build` and then deploys the compiled assets with the checked-in Wrangler configuration. The Worker serves the SPA and needs no environment variables or database bindings. Worker branch previews are disabled. The existing Pages integration provides branch previews and a separate public production URL.
 
-For a source rollback, revert the release merge through a PR and allow Workers Builds to redeploy the resulting `main` commit. For an immediate runtime rollback, use the Worker’s **Deployments** tab to roll back to the last verified version, then reconcile `main`. Worker rollback does not change local browser data.
+For a source rollback, revert the affected application changes through a PR, keep the functioning Worker configuration, and allow Workers Builds to redeploy `main`. For an immediate runtime rollback, use the Worker’s **Deployments** tab to roll back to the last verified version, then reconcile `main`. Worker rollback does not change local browser data.

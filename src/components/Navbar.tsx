@@ -18,7 +18,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
+          <Link to="/" className="flex items-center gap-2 group" onClick={() => setOpen(false)} aria-label="MatchOS home">
             <img src="https://raw.githubusercontent.com/MamduhSaffin/tgpugulf-match-os/16e181e583715698bea9b545efb0541f1345e396/public/gulf-advisory-logo.webp" alt="TGPU Gulf Advisory" className="w-10 h-10 object-contain bg-white rounded-lg p-1 shrink-0" />
             <span className="font-bold text-xl tracking-tight text-white">MatchOS</span>
           </Link>

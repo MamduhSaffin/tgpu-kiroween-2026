@@ -1,6 +1,6 @@
 # TGPU GCC Match – AWS KiroWeen 2026
 
-> AI-assisted business matching connecting Malaysian exporters with GCC distributors, buyers, and strategic partners.
+> Explainable business matching connecting Malaysian exporters with GCC distributors, buyers, and strategic partners.
 
 **Hackathon:** AWS KiroWeen 2026  
 **Team:** TGPU  
@@ -11,7 +11,7 @@
 ## Quick Start
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/MamduhSaffin/tgpu-kiroween-2026.git
 cd tgpu-kiroween-2026
 npm install
 npm run dev
@@ -52,7 +52,7 @@ tgpu-kiroween-2026/
 │   ├── data/
 │   │   └── companies.ts        # 16 fictional company profiles + localStorage keys
 │   ├── lib/
-│   │   ├── matcher.ts          # Rule-based scoring engine (4 factors → 0-100)
+│   │   ├── matcher.ts          # Rule-based scoring engine (6 factors → 0-100)
 │   │   └── storage.ts          # localStorage helpers (shortlist, inquiries, custom companies)
 │   ├── components/
 │   │   ├── Layout.tsx           # Navbar + Footer shell
@@ -87,14 +87,16 @@ The engine is a **transparent weighted-rule system** — not a trained machine-l
 
 | Factor | Weight | Logic |
 |---|---|---|
-| Sector compatibility | 40 pts | Exact match = 40; complementary sectors (defined affinity matrix) = 20; no overlap = 0 |
-| Product fit | 25 pts | Jaccard similarity on tokenised product lists (amplified for sparse data) |
-| Market overlap | 20 pts | Direct market hit (exporter targets distributor's country) = 12; shared target markets = 4 each |
-| Partnership alignment | 15 pts | 7 pts per shared partnership type; capped at 15 |
+| Sector compatibility | 30 pts | Exact match = 30; complementary sectors = 20 |
+| Product fit | 20 pts | Amplified Jaccard similarity, capped at 20 |
+| Market overlap | 15 pts | Direct market hit = 12; shared markets = 4 each, capped at 15 |
+| Partnership alignment | 10 pts | 7 per distinct shared type, capped at 10 |
+| Export readiness | 15 pts | Source company readiness and stated commercial capacity |
+| Certification alignment | 10 pts | Shared certification labels; not regulatory verification |
 
 **Grade bands:** Excellent ≥ 80 · Strong ≥ 60 · Good ≥ 40 · Fair < 40
 
-Same-role matches are excluded from results (the engine pairs complementary roles). Scores are directional because market fit is evaluated from the selected company's target markets.
+Same-role matches are excluded from results (the engine pairs complementary roles). Scores can be directional because readiness and certification alignment depend on the selected profile.
 
 ---
 
@@ -122,14 +124,14 @@ User-registered companies are stored in `localStorage` under key `tgpu_gcc_match
 
 ---
 
-## 3-Minute Demo Script
+## Suggested Demo Script (under 3 minutes)
 
 | Time | Action |
 |---|---|
 | 0:00 | Open the landing page. Point out the KiroWeen branding, the stat bar (16 companies, 6 GCC countries), and the Featured Companies section. |
 | 0:30 | Navigate to **Directory**. Show search and filters — filter by UAE, then by Food & Beverage sector. |
 | 1:00 | Click **Find Matches** on *NusaPure Foods*. The matching engine runs and returns ranked results for all GCC candidates. |
-| 1:20 | On the match results, expand the top match to show the **score breakdown** — four factor bars with plain-language explanations. Point out the "rule-based prototype, not trained AI" disclaimer. |
+| 1:20 | On the match results, expand the top match to show the **score breakdown** — six factor bars with plain-language explanations. Point out the "rule-based prototype, not trained AI" disclaimer. |
 | 1:40 | Click **Enquire** on the top match. Fill in the modal and submit. Show the success state ("saved to localStorage"). |
 | 2:00 | Navigate to **Dashboard**. Show the shortlist count, the saved enquiry, and the stats cards. |
 | 2:20 | Navigate to **Register**. Fill in a new fictional company. Submit, then click "Find My Matches" to see the new company in the matching engine. |

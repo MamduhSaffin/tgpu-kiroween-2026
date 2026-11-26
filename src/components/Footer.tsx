@@ -6,10 +6,10 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <div className="flex items-center gap-2 mb-3">
+            <Link to="/" className="inline-flex items-center gap-2 mb-3" aria-label="MatchOS home">
               <img src="https://raw.githubusercontent.com/MamduhSaffin/tgpugulf-match-os/16e181e583715698bea9b545efb0541f1345e396/public/gulf-advisory-logo.webp" alt="TGPU Gulf Advisory" className="w-10 h-10 object-contain bg-white rounded-lg p-1" />
               <span className="font-bold text-white">MatchOS</span>
-            </div>
+            </Link>
             <p className="text-sm leading-relaxed">
               A TGPU Legacy demonstration of rule-based matching between
               Malaysian exporters and GCC distributors.
@@ -19,7 +19,7 @@ export default function Footer() {
             <h4 className="text-white font-semibold mb-3">Navigation</h4>
             <ul className="space-y-2 text-sm">
               {[['/', 'Home'], ['/directory', 'Directory'], ['/match', 'Find Matches'], ['/dashboard', 'Dashboard'], ['/register', 'Register']].map(([to, label]) => (
-                <li key={to}><Link to={to} className="hover:text-tgpu-gold transition-colors">{label}</Link></li>
+                <li key={to}><Link to={to} className="inline-block py-2 hover:text-tgpu-gold transition-colors">{label}</Link></li>
               ))}
             </ul>
           </div>

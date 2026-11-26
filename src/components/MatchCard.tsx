@@ -19,12 +19,12 @@ export default function MatchCard({ result, rank, shortlisted, onToggleShortlist
 
   return (
     <div className={clsx(
-      'bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all',
+      'group bg-white rounded-2xl border shadow-sm hover:shadow-md transition-shadow',
       rank === 1 ? 'border-tgpu-gold ring-1 ring-tgpu-gold/30' : 'border-gray-100'
     )}>
       {rank === 1 && (
         <div className="bg-tgpu-gold text-tgpu-navy text-xs font-bold px-4 py-1.5 rounded-t-2xl flex items-center gap-1">
-          ★ Top Match
+          <span aria-hidden="true" className="motion-safe:transition-transform motion-safe:group-hover:rotate-12">★</span> Top Match
         </div>
       )}
       <div className="p-5">
@@ -47,6 +47,7 @@ export default function MatchCard({ result, rank, shortlisted, onToggleShortlist
               <button
                 type="button"
                 onClick={() => onToggleShortlist(company.id)}
+                aria-pressed={shortlisted}
                 aria-label={shortlisted ? `Remove ${company.name} from shortlist` : `Add ${company.name} to shortlist`}
                 className={clsx(
                   'flex-shrink-0 p-1.5 rounded-lg transition-colors',
@@ -69,8 +70,10 @@ export default function MatchCard({ result, rank, shortlisted, onToggleShortlist
         <ScoreBreakdown result={result} expanded={expanded} />
 
         {/* Toggle + actions */}
-        <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+        <div className="flex flex-wrap items-center justify-between gap-2 mt-4 pt-3 border-t border-gray-100">
           <button
+            type="button"
+            aria-expanded={expanded}
             onClick={() => setExpanded(e => !e)}
             className="flex items-center gap-1 text-xs text-tgpu-blue hover:text-tgpu-navy font-medium transition-colors"
           >

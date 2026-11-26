@@ -27,12 +27,12 @@ GCC Match provides a browser-based company profile, ranked partner results, fact
 - Tailwind CSS
 - Deterministic rule engine in `src/lib/matcher.ts`
 - Validated browser localStorage persistence
-- Cloudflare Pages static deployment
+- Cloudflare Workers static assets with SPA navigation
 
 ## Two-minute demo walkthrough
 
-1. Open the landing page and select **Find My Matches**.
-2. Use **NusaPure Foods Sdn Bhd** as the sample Malaysian exporter.
+1. Open the landing page and select **Try a sample match**.
+2. The example opens with **NusaPure Foods Sdn Bhd** selected.
 3. Review the ranked GCC partners and compatibility grades.
 4. Expand the top result to explain sector, product, market, partnership, readiness, and certification factors.
 5. Read the GCC relevance, mismatch, and recommended next-action guidance.

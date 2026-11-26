@@ -59,15 +59,15 @@ export default function LandingPage() {
               <span className="text-tgpu-gold">Anywhere.</span>
             </h1>
             <p className="text-lg md:text-xl text-gray-300 leading-relaxed mb-8 max-w-2xl mx-auto">
-              MatchOS AI uses transparent rule-based matching to help Malaysian businesses discover
+              MatchOS uses six transparent scoring factors to help Malaysian businesses discover
               distributors, buyers, and strategic partners across the Gulf Cooperation Council.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                to="/match"
-                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-tgpu-gold text-tgpu-navy font-bold rounded-xl hover:bg-amber-400 transition-colors text-base"
+                to="/match?company=my-001"
+                className="group inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-tgpu-gold text-tgpu-navy font-bold rounded-xl hover:bg-amber-400 transition-colors text-base"
               >
-                Find My Matches <ArrowRight size={18} />
+                Try a sample match <ArrowRight size={18} className="motion-safe:transition-transform motion-safe:group-hover:translate-x-1" />
               </Link>
               <Link
                 to="/directory"

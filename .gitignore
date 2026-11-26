@@ -13,3 +13,7 @@ dist/
 .wrangler/
 *.pem
 *.key
+
+# Local browser test output
+/playwright-report/
+/test-results/

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { X, Send, CheckCircle } from 'lucide-react'
 import { saveInquiry } from '../lib/storage'
 import type { Company } from '../data/companies'
@@ -11,10 +11,26 @@ interface Props {
 
 export default function InquiryModal({ from, to, onClose }: Props) {
   const [message, setMessage] = useState(
-    `Dear ${to.contactName},\n\nI represent ${from?.name ?? 'our company'} and we are interested in exploring a potential partnership with ${to.name}.\n\nWe believe there is strong alignment in our sectors and target markets. I would welcome the opportunity to arrange a call to discuss this further.\n\nKind regards`
+    `Dear ${to.contactName},\n\nI represent ${from?.name ?? 'our company'} and we are interested in exploring a potential partnership with ${to.name}.\n\nI would welcome the opportunity to discuss product fit, target markets and partnership requirements.\n\nKind regards`
   )
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
+  const dialogRef = useRef<HTMLDialogElement>(null)
+  const doneRef = useRef<HTMLButtonElement>(null)
+
+  useLayoutEffect(() => {
+    const dialog = dialogRef.current!
+    const trigger = document.activeElement
+    dialog.showModal()
+    return () => {
+      dialog.close()
+      if (trigger instanceof HTMLElement && trigger.isConnected) trigger.focus({ preventScroll: true })
+    }
+  }, [])
+
+  useEffect(() => {
+    if (sent) doneRef.current?.focus()
+  }, [sent])
 
   function handleSend(event: React.FormEvent) {
     event.preventDefault()
@@ -24,22 +40,26 @@ export default function InquiryModal({ from, to, onClose }: Props) {
       return
     }
     setError('')
-    saveInquiry({
-      fromCompanyId: from?.id ?? 'guest',
-      toCompanyId: to.id,
-      message: trimmedMessage,
-    })
+    try {
+      saveInquiry({
+        fromCompanyId: from?.id ?? 'guest',
+        toCompanyId: to.id,
+        message: trimmedMessage,
+      })
+    } catch {
+      setError('Could not save the enquiry. Check that browser storage is available and try again.')
+      return
+    }
     setSent(true)
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" role="presentation">
-      <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="inquiry-title"
-      >
+    <dialog
+      ref={dialogRef}
+      onCancel={event => { event.preventDefault(); onClose() }}
+      aria-labelledby="inquiry-title"
+      className="bg-white rounded-2xl shadow-2xl w-[calc(100%-2rem)] max-w-lg max-h-[90dvh] overflow-y-auto backdrop:bg-black/50"
+    >
         <div className="flex items-center justify-between p-5 border-b border-gray-100">
           <div>
             <h3 id="inquiry-title" className="font-semibold text-gray-900">Partnership Enquiry</h3>
@@ -60,6 +80,7 @@ export default function InquiryModal({ from, to, onClose }: Props) {
             </p>
             <button
               type="button"
+              ref={doneRef}
               onClick={onClose}
               className="mt-4 px-6 py-2 rounded-xl bg-tgpu-navy text-white text-sm font-medium hover:bg-tgpu-blue transition-colors"
             >
@@ -83,7 +104,7 @@ export default function InquiryModal({ from, to, onClose }: Props) {
                 className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 resize-none focus:outline-none focus:ring-2 focus:ring-tgpu-navy/20 focus:border-tgpu-navy transition"
               />
               <div className="flex justify-between mt-1 text-xs text-gray-400">
-                <span id="inquiry-error" className={error ? 'text-red-600' : ''}>{error || 'Minimum 20 characters'}</span>
+                <span id="inquiry-error" role={error ? 'alert' : undefined} className={error ? 'text-red-600' : ''}>{error || 'Minimum 20 characters'}</span>
                 <span>{message.length}/2000</span>
               </div>
             </div>
@@ -99,12 +120,11 @@ export default function InquiryModal({ from, to, onClose }: Props) {
                 type="submit"
                 className="flex-1 py-2.5 rounded-xl bg-tgpu-navy text-white text-sm font-medium hover:bg-tgpu-blue transition-colors flex items-center justify-center gap-2"
               >
-                <Send size={14} /> Send Enquiry
+                <Send size={14} /> Save Enquiry
               </button>
             </div>
           </form>
         )}
-      </div>
-    </div>
+    </dialog>
   )
 }

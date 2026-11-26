@@ -6,13 +6,13 @@ import { getCustomCompanies, getShortlist, toggleShortlist } from '../lib/storag
 import { computeMatches } from '../lib/matcher'
 import InquiryModal from '../components/InquiryModal'
 import clsx from 'clsx'
-import type { Company } from '../data/companies'
 
 export default function CompanyDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [shortlist, setShortlist] = useState<string[]>(getShortlist)
-  const [inquireTarget, setInquireTarget] = useState<Company | null>(null)
+  const [inquiryOpen, setInquiryOpen] = useState(false)
+  const [error, setError] = useState('')
 
   const allCompanies = useMemo(() => [...COMPANIES, ...getCustomCompanies()], [])
   const company = allCompanies.find(c => c.id === id)
@@ -34,14 +34,20 @@ export default function CompanyDetailPage() {
   const shortlisted = shortlist.includes(company.id)
 
   function handleToggle() {
-    setShortlist(toggleShortlist(company!.id))
+    try {
+      setShortlist(toggleShortlist(company!.id))
+      setError('')
+    } catch {
+      setError('Could not update the shortlist. Check that browser storage is available.')
+    }
   }
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-6 transition-colors">
-        <ArrowLeft size={15} /> Back
-      </button>
+      <Link to="/directory" className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-6 transition-colors">
+        <ArrowLeft size={15} /> Back to Directory
+      </Link>
+      {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main profile */}
@@ -57,9 +63,10 @@ export default function CompanyDetailPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-3">
-                  <div>
+                  <div className="min-w-0 break-words">
                     <h1 className="text-xl font-bold text-gray-900">{company.name}</h1>
                     <p className="text-gray-500 text-sm mt-0.5">{company.tagline}</p>
+                    {COMPANIES.includes(company) && <p className="mt-2 text-xs text-emerald-800">Fictional demo profile</p>}
                   </div>
                   <button
                     onClick={handleToggle}
@@ -67,7 +74,8 @@ export default function CompanyDetailPage() {
                       'flex-shrink-0 p-2 rounded-xl transition-colors',
                       shortlisted ? 'text-tgpu-gold bg-amber-50' : 'text-gray-400 hover:text-tgpu-gold hover:bg-amber-50'
                     )}
-                    title={shortlisted ? 'Remove from shortlist' : 'Add to shortlist'}
+                    aria-pressed={shortlisted}
+                    aria-label={shortlisted ? 'Remove from shortlist' : 'Add to shortlist'}
                   >
                     {shortlisted ? <BookmarkCheck size={22} /> : <Bookmark size={22} />}
                   </button>
@@ -127,10 +135,10 @@ export default function CompanyDetailPage() {
               <div className="text-gray-500 text-xs">{company.contactEmail}</div>
             </div>
             <button
-              onClick={() => setInquireTarget(company)}
+              onClick={() => setInquiryOpen(true)}
               className="mt-4 w-full py-2.5 bg-tgpu-navy text-white text-sm font-semibold rounded-xl hover:bg-tgpu-blue transition-colors flex items-center justify-center gap-2"
             >
-              <Send size={14} /> Send Partnership Enquiry
+              <Send size={14} /> Draft Partnership Enquiry
             </button>
           </div>
 
@@ -199,8 +207,8 @@ export default function CompanyDetailPage() {
         </div>
       </div>
 
-      {inquireTarget && (
-        <InquiryModal from={company} to={inquireTarget} onClose={() => setInquireTarget(null)} />
+      {inquiryOpen && (
+        <InquiryModal from={null} to={company} onClose={() => setInquiryOpen(false)} />
       )}
     </div>
   )

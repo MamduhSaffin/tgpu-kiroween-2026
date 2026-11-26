@@ -13,7 +13,7 @@
  *   Certification fit     – 10 pts
  */
 
-import type { Company, Sector, Country, PartnershipType } from '../data/companies'
+import type { Company, Sector, Country } from '../data/companies'
 
 export interface ScoreFactor {
   label: string
@@ -30,7 +30,33 @@ export interface MatchResult {
   summary: string
   mismatches: string[]
   marketRelevance: string
+  commercialOpportunity: string
   recommendedNextAction: string
+}
+
+function listed<T extends string>(values: T[] | undefined): T[] {
+  return Array.isArray(values)
+    ? values.filter(value => typeof value === 'string' && value.trim().length > 0)
+    : []
+}
+
+function labelKey(value: string): string {
+  return value.normalize('NFKC').trim().toLowerCase().replace(/\s+/g, ' ')
+}
+
+function sharedLabels(first: string[], second: string[]): string[] {
+  const keys = new Set(listed(first).map(labelKey))
+  return [...new Map(listed(second).map(value => [labelKey(value), value.trim()])).entries()]
+    .filter(([key]) => keys.has(key))
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, label]) => label)
+}
+
+const ROLES = new Set(['exporter', 'distributor', 'buyer', 'both'])
+
+function marketPair(a: Company, b: Company) {
+  if (a.role === 'exporter' || (a.role === 'both' && b.role !== 'exporter' && (b.role !== 'both' || a.id < b.id))) return { supplier: a, recipient: b }
+  return { supplier: b, recipient: a }
 }
 
 // ── Sector compatibility matrix ──────────────────────────────────────────────
@@ -50,7 +76,7 @@ const SECTOR_AFFINITY: Partial<Record<Sector, Sector[]>> = {
 
 function scoreSector(a: Company, b: Company): ScoreFactor {
   const MAX = 30
-  if (a.sector === b.sector) {
+  if (a.sector && a.sector === b.sector && Object.prototype.hasOwnProperty.call(SECTOR_AFFINITY, a.sector)) {
     return {
       label: 'Sector Match',
       score: MAX,
@@ -58,8 +84,8 @@ function scoreSector(a: Company, b: Company): ScoreFactor {
       explanation: `Both operate in ${a.sector} – direct sector alignment.`,
     }
   }
-  const affinityA = SECTOR_AFFINITY[a.sector] ?? []
-  const affinityB = SECTOR_AFFINITY[b.sector] ?? []
+  const affinityA = Object.prototype.hasOwnProperty.call(SECTOR_AFFINITY, a.sector) ? SECTOR_AFFINITY[a.sector] ?? [] : []
+  const affinityB = Object.prototype.hasOwnProperty.call(SECTOR_AFFINITY, b.sector) ? SECTOR_AFFINITY[b.sector] ?? [] : []
   if (affinityA.includes(b.sector) || affinityB.includes(a.sector)) {
     return {
       label: 'Sector Match',
@@ -79,14 +105,17 @@ function scoreSector(a: Company, b: Company): ScoreFactor {
 // ── Product fit ──────────────────────────────────────────────────────────────
 function scoreProducts(a: Company, b: Company): ScoreFactor {
   const MAX = 20
-  const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
-  const wordsA = new Set(a.products.flatMap(p => normalize(p).split(' ')))
-  const wordsB = new Set(b.products.flatMap(p => normalize(p).split(' ')))
+  const normalize = (s: string) => labelKey(s).replace(/[^\p{L}\p{N}]+/gu, ' ').trim()
+  const wordsA = new Set(listed(a.products).flatMap(p => normalize(p).split(' ')))
+  const wordsB = new Set(listed(b.products).flatMap(p => normalize(p).split(' ')))
   const stopwords = new Set(['and', 'for', 'of', 'the', 'in', 'a', 'an', '&'])
   wordsA.forEach(w => { if (!w || stopwords.has(w)) wordsA.delete(w) })
   wordsB.forEach(w => { if (!w || stopwords.has(w)) wordsB.delete(w) })
 
   const intersection = [...wordsA].filter(w => wordsB.has(w))
+  if (!wordsA.size || !wordsB.size) {
+    return { label: 'Product Fit', score: 0, maxScore: MAX, explanation: 'One or both profiles lack usable product details.' }
+  }
   const union = new Set([...wordsA, ...wordsB])
   const jaccard = union.size > 0 ? intersection.length / union.size : 0
   const raw = Math.round(jaccard * MAX * 3) // amplify sparse overlap
@@ -105,23 +134,22 @@ function scoreProducts(a: Company, b: Company): ScoreFactor {
 // ── Market overlap ───────────────────────────────────────────────────────────
 function scoreMarkets(a: Company, b: Company): ScoreFactor {
   const MAX = 15
-  // Find countries that appear in both companies' target market lists
-  const exporter = a.role === 'distributor' && b.role !== 'distributor' ? b : a
-  const distributor = exporter === a ? b : a
-  const setA = new Set<Country>(exporter.targetMarkets)
-  const overlap = [...new Set(distributor.targetMarkets.filter(m => setA.has(m) && m !== distributor.country))]
-  // Also check that b operates in a market a is targeting
-  const directHit = exporter.targetMarkets.includes(distributor.country)
+  const { supplier, recipient } = marketPair(a, b)
+  const supplierMarkets = listed(supplier.targetMarkets)
+  const recipientMarkets = listed(recipient.targetMarkets)
+  const setA = new Set<Country>(supplierMarkets)
+  const overlap = [...new Set(recipientMarkets.filter(m => setA.has(m) && m !== recipient.country))].sort()
+  const directHit = Boolean(recipient.country && setA.has(recipient.country))
 
   const score = Math.min(
     (directHit ? 12 : 0) + overlap.length * 4,
     MAX
   )
 
-  const marketNames = [...new Set([...(directHit ? [distributor.country] : []), ...overlap])]
+  const marketNames = [...new Set([...(directHit ? [recipient.country] : []), ...overlap])]
 
   if (score >= 12) {
-    return { label: 'Market Overlap', score, maxScore: MAX, explanation: `Strong geographic alignment – shared markets: ${marketNames.join(', ')}.` }
+    return { label: 'Market Overlap', score, maxScore: MAX, explanation: `Strong geographic alignment in ${marketNames.join(', ')}.${directHit ? ` ${recipient.name} is based in a market targeted by ${supplier.name}.` : ''}` }
   } else if (score >= 8) {
     return { label: 'Market Overlap', score, maxScore: MAX, explanation: `Partial market overlap in ${marketNames.join(', ')}.` }
   } else if (score > 0) {
@@ -133,8 +161,7 @@ function scoreMarkets(a: Company, b: Company): ScoreFactor {
 // ── Partnership alignment ────────────────────────────────────────────────────
 function scorePartnership(a: Company, b: Company): ScoreFactor {
   const MAX = 10
-  const setA = new Set<PartnershipType>(a.partnershipTypes)
-  const common = [...new Set(b.partnershipTypes.filter(p => setA.has(p)))]
+  const common = sharedLabels(a.partnershipTypes, b.partnershipTypes)
   const score = Math.min(common.length * 7, MAX)
 
   if (score >= 10) {
@@ -147,37 +174,33 @@ function scorePartnership(a: Company, b: Company): ScoreFactor {
 
 function scoreReadiness(a: Company): ScoreFactor {
   const MAX = 15
-  const directReadiness = a.exportReadiness === 'Established exporter'
-    ? 15
-    : a.exportReadiness === 'Exporting'
-      ? 11
-      : 7
-  const capacity = a.commercialCapacity?.trim() ? 0 : -3
-  const score = Math.max(4, directReadiness + capacity)
+  const levels = { 'Established exporter': 15, Exporting: 11, Planning: 7 }
+  const readiness = a.exportReadiness
+  const directReadiness = readiness && Object.prototype.hasOwnProperty.call(levels, readiness) ? levels[readiness] : undefined
+  const capacity = typeof a.commercialCapacity === 'string' && a.commercialCapacity.trim()
+  const documentedCapacity = capacity && labelKey(capacity) !== 'not disclosed'
+  const score = directReadiness === undefined ? 0 : directReadiness - (documentedCapacity ? 0 : 3)
+
   return {
     label: 'Export Readiness',
     score,
     maxScore: MAX,
-    explanation: a.exportReadiness
-      ? `${a.name} reports ${a.exportReadiness.toLowerCase()} status${a.commercialCapacity ? ` with capacity: ${a.commercialCapacity}` : ''}.`
+    explanation: directReadiness !== undefined && readiness
+      ? `${a.name} reports ${readiness.toLowerCase()} status. ${documentedCapacity ? `Stated capacity: ${capacity}.` : 'Capacity has not been disclosed.'}`
       : 'Export readiness was not specified; verify sample, volume, and delivery capability directly.',
   }
 }
 
 function scoreCertification(a: Company, b: Company): ScoreFactor {
   const MAX = 10
-  const required = new Set(a.certifications.map(v => v.toLowerCase()))
-  const common = b.certifications.filter(v => required.has(v.toLowerCase()))
-  const score = common.length > 0 ? Math.min(MAX, 5 + common.length * 2) : (a.certifications.length === 0 ? 5 : 2)
+  const common = sharedLabels(a.certifications, b.certifications)
   return {
     label: 'Certification Alignment',
-    score,
+    score: common.length ? Math.min(MAX, 5 + common.length * 2) : 0,
     maxScore: MAX,
-    explanation: common.length > 0
-      ? `Shared or comparable certification coverage includes ${common.slice(0, 3).join(', ')}.`
-      : a.certifications.length === 0
-        ? 'Certification requirements are not yet documented.'
-        : 'No explicit certification overlap was identified; each market and product category must be verified.',
+    explanation: common.length
+      ? `Both profiles list ${common.join(', ')}. Verify issuer, validity, product scope, and destination-market acceptance.`
+      : 'No shared credentials are documented. Ask for applicable certificates and verify destination-market requirements.',
   }
 }
 
@@ -190,39 +213,36 @@ function grade(score: number): MatchResult['grade'] {
 }
 
 // ── Summary generator ────────────────────────────────────────────────────────
-function buildSummary(a: Company, b: Company, total: number, factors: ScoreFactor[]): string {
-  const topFactor = [...factors].sort((x, y) => y.score / y.maxScore - x.score / x.maxScore)[0]
-  const g = grade(total)
-  if (g === 'Excellent') {
-    return `${b.name} is an excellent match for ${a.name}. The strongest signal is ${topFactor.label.toLowerCase()}, supported by complementary market presence and aligned partnership goals.`
-  }
-  if (g === 'Strong') {
-    return `${b.name} presents a strong opportunity. ${topFactor.explanation} Further discussion on partnership terms is recommended.`
-  }
-  if (g === 'Good') {
-    return `${b.name} shows potential. ${topFactor.explanation} Some alignment gaps exist and would benefit from direct dialogue.`
-  }
-  return `${b.name} is a partial match. The two businesses share limited overlap at this time, but may still find complementary value in exploratory discussions.`
+function buildSummary(b: Company, total: number, factors: ScoreFactor[]): string {
+  const strongest = [...factors].sort((x, y) => y.score / y.maxScore - x.score / x.maxScore)
+    .find(factor => factor.score > 0)
+  return strongest
+    ? `${b.name} is a ${grade(total).toLowerCase()} match. ${strongest.explanation}`
+    : `${b.name} has no documented alignment across the six scoring factors.`
 }
 
-function buildMismatches(a: Company, b: Company): string[] {
-  const mismatches: string[] = []
-  if (a.sector !== b.sector) mismatches.push(`Sector profiles differ (${a.sector} vs ${b.sector}).`)
-  if (!a.targetMarkets.includes(b.country)) mismatches.push(`${b.country} is not listed as a direct target market by ${a.name}.`)
-  if (!a.partnershipTypes.some(type => b.partnershipTypes.includes(type))) mismatches.push('Preferred partnership models do not overlap yet.')
-  if (a.certifications.length > 0 && !a.certifications.some(cert => b.certifications.includes(cert))) {
-    mismatches.push('Explicit certification overlap was not identified.')
+function buildMismatches(a: Company, b: Company, factors: ScoreFactor[]): string[] {
+  const [sector, products, markets, partnership, readiness, certifications] = factors
+  const risks: string[] = []
+  if (sector.score < sector.maxScore) risks.push('Check whether the companies serve the same customer segment.')
+  if (products.score < 10) risks.push('Confirm product specifications and whether the partner has demand for them.')
+  const { supplier, recipient } = marketPair(a, b)
+  if (!listed(supplier.targetMarkets).includes(recipient.country)) {
+    risks.push(`${supplier.name} has not listed ${recipient.country} as a target market.`)
   }
-  if (!mismatches.length) mismatches.push('No major listed mismatch; confirm commercial terms and regulatory requirements directly.')
-  return mismatches
+  if (!markets.score) risks.push('Validate local demand and the proposed route to market.')
+  if (!partnership.score) risks.push('Confirm a workable partnership model before discussing terms.')
+  if (readiness.score < 11) risks.push('Confirm sample availability, lead times, and minimum order volumes.')
+  if (!certifications.score) risks.push('Request current certificates and check the required approvals.')
+  return risks.length ? risks : ['Confirm commercial terms, available capacity, and applicable approvals directly.']
 }
 
-function buildMarketRelevance(a: Company, b: Company): string {
-  const direct = a.targetMarkets.includes(b.country)
-  const regional = a.targetMarkets.some(market => market !== 'Malaysia' && b.targetMarkets.includes(market))
-  if (direct) return `${b.country} is a priority target market for ${a.name}; ${b.name} operates locally in that market.`
-  if (regional) return `There is regional GCC overlap, although ${b.country} is not an explicit direct target.`
-  return `The listed market overlap is limited; validate the GCC route and local demand before advancing.`
+function buildOpportunity(a: Company, b: Company): string {
+  const common = sharedLabels(a.partnershipTypes, b.partnershipTypes)
+  const { supplier, recipient } = marketPair(a, b)
+  return common.length
+    ? `Explore ${common.map(label => label.toLowerCase()).join(' or ')} with ${recipient.name} in ${recipient.country}.`
+    : `Ask ${recipient.name} what it sources in ${recipient.country} and whether ${supplier.name} can meet that demand.`
 }
 
 function buildNextAction(total: number): string {
@@ -234,11 +254,14 @@ function buildNextAction(total: number): string {
 
 // ── Main export ──────────────────────────────────────────────────────────────
 export function computeMatches(source: Company, candidates: Company[]): MatchResult[] {
-  // Exclude self; optionally exclude same-country same-role (exporter ↔ exporter not useful)
-  const pool = candidates.filter(c => {
-    if (c.id === source.id) return false
-    // Avoid matching exporter-to-exporter or distributor-to-distributor unless both=both
-    if (source.role !== 'both' && c.role !== 'both' && source.role === c.role) return false
+  if (!source?.id || !source.name || !ROLES.has(source.role)) return []
+  const seen = new Set([source.id])
+  const pool = candidates.filter(candidate => {
+    if (!candidate?.id || !candidate.name || !ROLES.has(candidate.role) || seen.has(candidate.id)) return false
+    const hasSupplier = source.role === 'exporter' || candidate.role === 'exporter'
+    const hasRecipient = ['buyer', 'distributor'].includes(source.role) || ['buyer', 'distributor'].includes(candidate.role)
+    if (source.role !== 'both' && candidate.role !== 'both' && !(hasSupplier && hasRecipient)) return false
+    seen.add(candidate.id)
     return true
   })
 
@@ -252,19 +275,20 @@ export function computeMatches(source: Company, candidates: Company[]): MatchRes
       const f6 = scoreCertification(source, candidate)
       const factors = [f1, f2, f3, f4, f5, f6]
       const total = factors.reduce((s, f) => s + f.score, 0)
-      const mismatches = buildMismatches(source, candidate)
-      const marketRelevance = buildMarketRelevance(source, candidate)
+      const mismatches = buildMismatches(source, candidate, factors)
+      const marketRelevance = f3.explanation
       const recommendedNextAction = buildNextAction(total)
       return {
         company: candidate,
         totalScore: total,
         grade: grade(total),
         factors,
-        summary: buildSummary(source, candidate, total, factors),
+        summary: buildSummary(candidate, total, factors),
         mismatches,
         marketRelevance,
+        commercialOpportunity: buildOpportunity(source, candidate),
         recommendedNextAction,
       } satisfies MatchResult
     })
-    .sort((a, b) => b.totalScore - a.totalScore || a.company.name.localeCompare(b.company.name))
+    .sort((a, b) => b.totalScore - a.totalScore || a.company.name.localeCompare(b.company.name) || a.company.id.localeCompare(b.company.id))
 }

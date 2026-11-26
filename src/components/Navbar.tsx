@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
-import { Menu, X, Zap } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import clsx from 'clsx'
 
 const NAV_LINKS = [
@@ -19,13 +19,8 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 rounded-lg bg-tgpu-gold flex items-center justify-center">
-              <Zap size={20} className="text-tgpu-navy" />
-            </div>
-            <div className="leading-tight">
-              <span className="font-bold text-base tracking-wide text-white">Match</span>
-              <span className="text-tgpu-gold font-bold text-base ml-1">OS</span>
-            </div>
+            <img src="https://raw.githubusercontent.com/MamduhSaffin/tgpugulf-match-os/16e181e583715698bea9b545efb0541f1345e396/public/gulf-advisory-logo.webp" alt="TGPU Gulf Advisory" className="w-10 h-10 object-contain bg-white rounded-lg p-1 shrink-0" />
+            <span className="font-bold text-xl tracking-tight text-white">MatchOS</span>
           </Link>
 
           {/* Desktop nav */}

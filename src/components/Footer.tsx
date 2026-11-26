@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <Link to="/" className="inline-flex items-center gap-2 mb-3" aria-label="MatchOS home">
-              <img src="https://raw.githubusercontent.com/MamduhSaffin/tgpugulf-match-os/16e181e583715698bea9b545efb0541f1345e396/public/gulf-advisory-logo.webp" alt="TGPU Gulf Advisory" className="w-10 h-10 object-contain bg-white rounded-lg p-1" />
+              <img src="/match-logo.svg" alt="TGPU Match" className="w-10 h-10 object-contain bg-white rounded-lg p-1" />
               <span className="font-bold text-white">MatchOS</span>
             </Link>
             <p className="text-sm leading-relaxed">

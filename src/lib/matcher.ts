@@ -5,10 +5,12 @@
  * model. Scores are deterministic and fully explainable. Each factor is documented.
  *
  * Scoring breakdown (total 100 pts):
- *   Sector compatibility  – 40 pts
- *   Product fit           – 25 pts
- *   Market overlap        – 20 pts
- *   Partnership alignment – 15 pts
+ *   Sector compatibility  – 30 pts
+ *   Product fit           – 20 pts
+ *   Market overlap        – 15 pts
+ *   Partnership alignment – 10 pts
+ *   Export readiness      – 15 pts
+ *   Certification fit     – 10 pts
  */
 
 import type { Company, Sector, Country, PartnershipType } from '../data/companies'
@@ -81,8 +83,8 @@ function scoreProducts(a: Company, b: Company): ScoreFactor {
   const wordsA = new Set(a.products.flatMap(p => normalize(p).split(' ')))
   const wordsB = new Set(b.products.flatMap(p => normalize(p).split(' ')))
   const stopwords = new Set(['and', 'for', 'of', 'the', 'in', 'a', 'an', '&'])
-  wordsA.forEach(w => { if (stopwords.has(w)) wordsA.delete(w) })
-  wordsB.forEach(w => { if (stopwords.has(w)) wordsB.delete(w) })
+  wordsA.forEach(w => { if (!w || stopwords.has(w)) wordsA.delete(w) })
+  wordsB.forEach(w => { if (!w || stopwords.has(w)) wordsB.delete(w) })
 
   const intersection = [...wordsA].filter(w => wordsB.has(w))
   const union = new Set([...wordsA, ...wordsB])
@@ -104,19 +106,21 @@ function scoreProducts(a: Company, b: Company): ScoreFactor {
 function scoreMarkets(a: Company, b: Company): ScoreFactor {
   const MAX = 15
   // Find countries that appear in both companies' target market lists
-  const setA = new Set<Country>([a.country, ...a.targetMarkets])
-  const overlap = [...new Set(b.targetMarkets.filter(m => setA.has(m)))]
+  const exporter = a.role === 'distributor' && b.role !== 'distributor' ? b : a
+  const distributor = exporter === a ? b : a
+  const setA = new Set<Country>(exporter.targetMarkets)
+  const overlap = [...new Set(distributor.targetMarkets.filter(m => setA.has(m) && m !== distributor.country))]
   // Also check that b operates in a market a is targeting
-  const directHit = a.targetMarkets.includes(b.country)
+  const directHit = exporter.targetMarkets.includes(distributor.country)
 
   const score = Math.min(
     (directHit ? 12 : 0) + overlap.length * 4,
     MAX
   )
 
-  const marketNames = [...new Set([...(directHit ? [b.country] : []), ...overlap])]
+  const marketNames = [...new Set([...(directHit ? [distributor.country] : []), ...overlap])]
 
-  if (score >= 16) {
+  if (score >= 12) {
     return { label: 'Market Overlap', score, maxScore: MAX, explanation: `Strong geographic alignment – shared markets: ${marketNames.join(', ')}.` }
   } else if (score >= 8) {
     return { label: 'Market Overlap', score, maxScore: MAX, explanation: `Partial market overlap in ${marketNames.join(', ')}.` }
@@ -130,10 +134,10 @@ function scoreMarkets(a: Company, b: Company): ScoreFactor {
 function scorePartnership(a: Company, b: Company): ScoreFactor {
   const MAX = 10
   const setA = new Set<PartnershipType>(a.partnershipTypes)
-  const common = b.partnershipTypes.filter(p => setA.has(p))
+  const common = [...new Set(b.partnershipTypes.filter(p => setA.has(p)))]
   const score = Math.min(common.length * 7, MAX)
 
-  if (score >= 14) {
+  if (score >= 10) {
     return { label: 'Partnership Fit', score, maxScore: MAX, explanation: `Excellent alignment – both seek: ${common.join(', ')}.` }
   } else if (score >= 7) {
     return { label: 'Partnership Fit', score, maxScore: MAX, explanation: `Good partnership fit – common type: ${common.join(', ')}.` }

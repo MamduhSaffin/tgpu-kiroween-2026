@@ -120,8 +120,8 @@ export default function RegisterPage() {
       <div className="max-w-lg mx-auto px-4 py-16 text-center">
         <CheckCircle size={56} className="text-emerald-500 mx-auto mb-4" />
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Profile Registered!</h2>
-        <p className="text-gray-500 mb-6">Your company profile has been saved to localStorage and will appear in the directory and matching engine.</p>
-        <div className="flex gap-3 justify-center">
+        <p className="text-gray-500 mb-6">Your company profile is saved in this browser and available in the prototype directory and matching engine.</p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={() => navigate(`/match?company=${encodeURIComponent(savedCompanyId)}`)}
             className="px-6 py-3 bg-tgpu-navy text-white font-semibold rounded-xl hover:bg-tgpu-blue transition-colors"

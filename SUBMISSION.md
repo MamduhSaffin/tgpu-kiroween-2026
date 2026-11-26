@@ -53,8 +53,8 @@ Kiro CLI, React, React Router, TypeScript, Vite, Tailwind CSS, Lucide, browser l
 ## Links
 
 - [Public GitHub repository](https://github.com/MamduhSaffin/tgpu-kiroween-2026)
-- [Public demo on Cloudflare Pages](https://match.tgpu.my/)
-- [Dedicated Cloudflare Worker](https://tgpu-kiroween-2026.moesaffin.workers.dev/) · release verification pending.
+- [Verified public demo on the dedicated Cloudflare Worker](https://tgpu-kiroween-2026.moesaffin.workers.dev/)
+- [Cloudflare Pages fallback](https://match.tgpu.my/)
 - YouTube demo: pending.
 
 ## Devpost entry checklist

@@ -22,6 +22,16 @@ describe('computeMatches', () => {
     })
   })
 
+  it('credits a distributor in the exporter target country in either direction', () => {
+    const exporter = { ...COMPANIES.find(c => c.id === 'my-001')!, targetMarkets: ['UAE' as const] }
+    const distributor = { ...COMPANIES.find(c => c.id === 'uae-001')!, targetMarkets: [] }
+    for (const [source, candidate] of [[exporter, distributor], [distributor, exporter]]) {
+      const match = computeMatches(source, [candidate])[0]
+      expect(match.factors.find(f => f.label === 'Market Overlap')?.score).toBe(12)
+      expect(match.factors.reduce((sum, f) => sum + f.maxScore, 0)).toBe(100)
+    }
+  })
+
   it('excludes the source company and same-role candidates', () => {
     const source = COMPANIES.find(company => company.id === 'my-001')!
     const matches = computeMatches(source, COMPANIES)

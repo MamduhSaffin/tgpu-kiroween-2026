@@ -6,6 +6,7 @@ import { clearDemoData, getCustomCompanies, getShortlist, toggleShortlist, getIn
 import CompanyCard from '../components/CompanyCard'
 
 export default function DashboardPage() {
+  const [notice, setNotice] = useState({ text: '', error: false })
   const [shortlist, setShortlist] = useState<string[]>(getShortlist)
   const [inquiries, setInquiries] = useState(getInquiries)
   const [customCompanies, setCustomCompanies] = useState(getCustomCompanies)
@@ -14,20 +15,29 @@ export default function DashboardPage() {
   const shortlisted = allCompanies.filter(c => shortlist.includes(c.id))
 
   function handleToggle(id: string) {
-    setShortlist(toggleShortlist(id))
+    try {
+      setShortlist(toggleShortlist(id))
+    } catch {
+      setNotice({ text: 'Could not update the shortlist. Check that browser storage is available.', error: true })
+    }
   }
 
   function handleReset() {
     if (!window.confirm('Reset all local demo data, including profiles, shortlists, and enquiries?')) return
-    clearDemoData()
-    setShortlist([])
-    setInquiries([])
-    setCustomCompanies([])
+    try {
+      clearDemoData()
+      setNotice({ text: 'Demo data reset. Fictional example companies are ready to use.', error: false })
+    } catch {
+      setNotice({ text: 'Could not reset all demo data. Check that browser storage is available and try again.', error: true })
+    }
+    setShortlist(getShortlist())
+    setInquiries(getInquiries())
+    setCustomCompanies(getCustomCompanies())
   }
 
   const stats = [
     { icon: Bookmark, label: 'Shortlisted', value: shortlisted.length, color: 'text-tgpu-gold' },
-    { icon: Send, label: 'Enquiries Sent', value: inquiries.length, color: 'text-blue-500' },
+    { icon: Send, label: 'Enquiries Saved', value: inquiries.length, color: 'text-blue-500' },
     { icon: Users, label: 'My Profiles', value: customCompanies.length, color: 'text-emerald-500' },
     { icon: BarChart3, label: 'Total Companies', value: allCompanies.length, color: 'text-purple-500' },
   ]
@@ -38,7 +48,7 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Your Dashboard</h1>
-            <p className="text-gray-500 text-sm mt-1">Shortlisted partners, sent enquiries, and registered profiles — all stored locally.</p>
+            <p className="text-gray-500 text-sm mt-1">Shortlisted partners, saved enquiries, and registered profiles — all stored locally.</p>
           </div>
           <button
             type="button"
@@ -49,6 +59,8 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>
+
+      {notice.text && <p role={notice.error ? 'alert' : 'status'} className={'mb-4 text-sm ' + (notice.error ? 'text-red-700' : 'text-emerald-800')}>{notice.text}</p>}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -127,7 +139,7 @@ export default function DashboardPage() {
           <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-10 text-center text-gray-400">
             <Send size={36} className="mx-auto mb-3 opacity-30" />
             <p className="font-medium">No enquiries sent yet.</p>
-            <p className="text-sm mt-1">Use the "Enquire" button on the matching page to send a partnership enquiry.</p>
+            <p className="text-sm mt-1">Use the "Enquire" button on the matching page to save a partnership enquiry.</p>
             <Link to="/match" className="mt-3 inline-block text-sm text-tgpu-blue hover:underline">Go to Matching →</Link>
           </div>
         ) : (

@@ -18,28 +18,37 @@ export default function DirectoryPage() {
   const [sector, setSector] = useState<typeof SECTORS[number]>('All')
   const [shortlist, setShortlist] = useState<string[]>(getShortlist)
   const [showFilters, setShowFilters] = useState(false)
+  const [error, setError] = useState('')
 
   const allCompanies = useMemo(() => [...COMPANIES, ...getCustomCompanies()], [])
 
   const filtered = useMemo(() => {
-    const q = query.toLowerCase()
+    const terms = query.toLowerCase().trim().split(/\s+/).filter(Boolean)
     return allCompanies.filter(c => {
       if (country !== 'All' && c.country !== country) return false
       if (role !== 'All' && c.role !== role) return false
       if (sector !== 'All' && c.sector !== sector) return false
-      if (q && ![
+      const fields = [
         c.name,
         c.sector,
         c.tagline,
         c.description,
         ...c.products,
-      ].some(value => value.toLowerCase().includes(q))) return false
-      return true
+        c.country,
+        c.city,
+        c.role,
+      ].join(' ').toLowerCase()
+      return terms.every(term => fields.includes(term))
     })
   }, [allCompanies, query, country, role, sector])
 
   function handleToggle(id: string) {
-    setShortlist(toggleShortlist(id))
+    try {
+      setShortlist(toggleShortlist(id))
+      setError('')
+    } catch {
+      setError('Could not update the shortlist. Check that browser storage is available.')
+    }
   }
 
   function handleMatch(company: Company) {
@@ -60,8 +69,8 @@ export default function DirectoryPage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Company Directory</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          {allCompanies.length} fictional demo companies · {filtered.length} matching your filters
+        <p role="status" className="text-gray-500 text-sm mt-1">
+          {COMPANIES.length} fictional demo profiles · {filtered.length} of {allCompanies.length} companies shown
         </p>
       </div>
 
@@ -70,6 +79,8 @@ export default function DirectoryPage() {
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
+            type="search"
+            aria-label="Search companies"
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Search by name, sector, or description…"
@@ -78,11 +89,12 @@ export default function DirectoryPage() {
         </div>
         <button
           type="button"
+          aria-expanded={showFilters}
           onClick={() => setShowFilters(f => !f)}
           className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors bg-white"
         >
           <SlidersHorizontal size={15} />
-          <span className="hidden sm:inline">Filters</span>
+          <span>Filters</span>
           {hasFilters && <span className="w-2 h-2 rounded-full bg-tgpu-gold" />}
         </button>
         {hasFilters && (
@@ -100,8 +112,9 @@ export default function DirectoryPage() {
       {showFilters && (
         <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="text-xs font-medium text-gray-600 mb-1.5 block">Country</label>
+            <label htmlFor="filter-country" className="text-xs font-medium text-gray-600 mb-1.5 block">Country</label>
             <select
+              id="filter-country"
               value={country}
               onChange={e => setCountry(e.target.value as typeof country)}
               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-tgpu-navy/20 bg-white"
@@ -110,8 +123,9 @@ export default function DirectoryPage() {
             </select>
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-600 mb-1.5 block">Role</label>
+            <label htmlFor="filter-role" className="text-xs font-medium text-gray-600 mb-1.5 block">Role</label>
             <select
+              id="filter-role"
               value={role}
               onChange={e => setRole(e.target.value as typeof role)}
               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-tgpu-navy/20 bg-white capitalize"
@@ -120,8 +134,9 @@ export default function DirectoryPage() {
             </select>
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-600 mb-1.5 block">Sector</label>
+            <label htmlFor="filter-sector" className="text-xs font-medium text-gray-600 mb-1.5 block">Sector</label>
             <select
+              id="filter-sector"
               value={sector}
               onChange={e => setSector(e.target.value as typeof sector)}
               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-tgpu-navy/20 bg-white"
@@ -131,6 +146,8 @@ export default function DirectoryPage() {
           </div>
         </div>
       )}
+
+      {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
 
       {/* Results */}
       {filtered.length === 0 ? (

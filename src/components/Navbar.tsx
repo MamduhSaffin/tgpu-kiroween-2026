@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { Menu, X } from 'lucide-react'
 import clsx from 'clsx'
@@ -12,9 +12,15 @@ const NAV_LINKS = [
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
+  const menuButton = useRef<HTMLButtonElement>(null)
 
   return (
-    <nav className="bg-tgpu-navy/95 backdrop-blur-xl text-white shadow-lg border-b border-emerald-400/15 sticky top-0 z-50">
+    <nav aria-label="Main navigation" onKeyDown={event => {
+      if (open && event.key === 'Escape') {
+        setOpen(false)
+        menuButton.current?.focus()
+      }
+    }} className="bg-tgpu-navy/95 backdrop-blur-xl text-white shadow-lg border-b border-emerald-400/15 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -45,6 +51,8 @@ export default function Navbar() {
 
           {/* Mobile menu button */}
           <button
+            ref={menuButton}
+            type="button"
             className="md:hidden p-2 rounded-lg hover:bg-white/10 transition-colors"
             onClick={() => setOpen(o => !o)}
             aria-label="Toggle menu"
@@ -57,8 +65,7 @@ export default function Navbar() {
       </div>
 
       {/* Mobile menu */}
-      {open && (
-        <div id="mobile-navigation" className="md:hidden border-t border-white/10 px-4 pb-4 pt-2 space-y-1">
+      <div id="mobile-navigation" hidden={!open} className="md:hidden border-t border-white/10 px-4 pb-4 pt-2 space-y-1">
           {NAV_LINKS.map(({ to, label }) => (
             <NavLink
               key={to}
@@ -77,7 +84,6 @@ export default function Navbar() {
             </NavLink>
           ))}
         </div>
-      )}
     </nav>
   )
 }

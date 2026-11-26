@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Children, cloneElement, isValidElement, useId, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckCircle, AlertCircle } from 'lucide-react'
 import { saveCustomCompany } from '../lib/storage'
@@ -44,7 +44,7 @@ export default function RegisterPage() {
 
   const [form, setForm] = useState(INITIAL_FORM)
 
-  function set(field: string, value: unknown) {
+  function set<K extends keyof typeof INITIAL_FORM>(field: K, value: typeof INITIAL_FORM[K]) {
     setForm(f => ({ ...f, [field]: value }))
   }
 
@@ -61,7 +61,7 @@ export default function RegisterPage() {
     }
     if (!form.city.trim()) { setError('City is required.'); return }
     if (form.city.trim().length > 80) { setError('City must be 80 characters or fewer.'); return }
-    const products = form.products.split(',').map(s => s.trim()).filter(Boolean)
+    const products = splitLabels(form.products)
     if (products.length === 0) { setError('Please list at least one product.'); return }
     if (products.length > 20 || products.some(product => product.length > 80)) {
       setError('List up to 20 products, with each product no longer than 80 characters.'); return
@@ -85,7 +85,7 @@ export default function RegisterPage() {
     const initials = form.name.trim().split(' ').slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('')
 
     const company: Company = {
-      id: `custom-${Date.now()}`,
+      id: `custom-${crypto.randomUUID()}`,
       name: form.name.trim(),
       tagline: form.tagline.trim() || `${form.sector} ${form.role} based in ${form.city}`,
       role: form.role,
@@ -98,19 +98,26 @@ export default function RegisterPage() {
       annualRevenue: form.annualRevenue || 'Not disclosed',
       employees: form.employees || 'Not disclosed',
       established: parseInt(form.established) || new Date().getFullYear(),
-      certifications: form.certifications.split(',').map(s => s.trim()).filter(Boolean),
+      certifications: splitLabels(form.certifications),
       description: form.description.trim() || `${form.name} is a ${form.role} in the ${form.sector} sector.`,
       contactName: form.contactName.trim() || 'Contact',
-      contactEmail: form.contactEmail.trim() || 'contact@example.com',
+      contactEmail: form.contactEmail.trim() || 'contact@example.invalid',
       logoInitials: initials || '??',
       logoColor: form.logoColor,
       featured: false,
       exportReadiness: form.exportReadiness,
       marketObjectives: form.marketObjectives,
-      commercialCapacity: form.commercialCapacity.trim() || 'Not disclosed',
+      commercialCapacity: form.commercialCapacity.trim() || undefined,
     }
 
-    saveCustomCompany(company)
+    try {
+      saveCustomCompany(company)
+    } catch (error) {
+      setError(error instanceof Error && error.message.startsWith('A company')
+        ? error.message
+        : 'Could not save your profile. Check that browser storage is available and try again.')
+      return
+    }
     setSavedCompanyId(company.id)
     setSaved(true)
   }
@@ -147,7 +154,7 @@ export default function RegisterPage() {
       </div>
 
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-sm text-amber-800">
-        ⓘ Demo prototype — data is stored in localStorage only. No account is created and no data is transmitted.
+        ⓘ Demo prototype — Use fictional company and contact details. Profiles stay in this browser.
       </div>
 
       {error && (
@@ -161,38 +168,38 @@ export default function RegisterPage() {
         <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
           <h3 className="font-semibold text-gray-800 text-sm uppercase tracking-wide">Company Details</h3>
           <Field label="Company Name *">
-            <input required value={form.name} onChange={e => set('name', e.target.value)} className={INPUT} placeholder="e.g. Acme Foods Sdn Bhd" />
+            <input required maxLength={120} value={form.name} onChange={e => set('name', e.target.value)} className={INPUT} placeholder="e.g. Acme Foods Sdn Bhd" />
           </Field>
           <Field label="Tagline">
-            <input value={form.tagline} onChange={e => set('tagline', e.target.value)} className={INPUT} placeholder="One-sentence description of your business" />
+            <input maxLength={160} value={form.tagline} onChange={e => set('tagline', e.target.value)} className={INPUT} placeholder="One-sentence description of your business" />
           </Field>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Role *">
-              <select value={form.role} onChange={e => set('role', e.target.value)} className={INPUT}>
+              <select value={form.role} onChange={e => set('role', e.target.value as Role)} className={INPUT}>
                 {ROLES.map(r => <option key={r} value={r} className="capitalize">{r}</option>)}
               </select>
             </Field>
             <Field label="Sector *">
-              <select value={form.sector} onChange={e => set('sector', e.target.value)} className={INPUT}>
+              <select value={form.sector} onChange={e => set('sector', e.target.value as Sector)} className={INPUT}>
                 {SECTORS.map(s => <option key={s}>{s}</option>)}
               </select>
             </Field>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Country *">
-              <select value={form.country} onChange={e => set('country', e.target.value)} className={INPUT}>
+              <select value={form.country} onChange={e => set('country', e.target.value as Country)} className={INPUT}>
                 {COUNTRIES.map(c => <option key={c}>{c}</option>)}
               </select>
             </Field>
             <Field label="City *">
-              <input required value={form.city} onChange={e => set('city', e.target.value)} className={INPUT} placeholder="e.g. Kuala Lumpur" />
+              <input required maxLength={80} value={form.city} onChange={e => set('city', e.target.value)} className={INPUT} placeholder="e.g. Kuala Lumpur" />
             </Field>
           </div>
           <Field label="Products / Services (comma-separated) *">
-            <input value={form.products} onChange={e => set('products', e.target.value)} className={INPUT} placeholder="e.g. Frozen meals, Instant noodles, Sauces" />
+            <input maxLength={1620} value={form.products} onChange={e => set('products', e.target.value)} className={INPUT} placeholder="e.g. Frozen meals, Instant noodles, Sauces" />
           </Field>
           <Field label="Description">
-            <textarea rows={3} value={form.description} onChange={e => set('description', e.target.value)} className={INPUT + ' resize-none'} placeholder="Brief company overview…" />
+            <textarea rows={3} maxLength={2000} value={form.description} onChange={e => set('description', e.target.value)} className={INPUT + ' resize-none'} placeholder="Brief company overview…" />
           </Field>
         </div>
 
@@ -204,6 +211,7 @@ export default function RegisterPage() {
               {PARTNERSHIP_TYPES.map(pt => (
                 <button
                   key={pt} type="button"
+                  aria-pressed={form.partnershipTypes.includes(pt)}
                   onClick={() => set('partnershipTypes', toggleArray(form.partnershipTypes, pt))}
                   className={`text-xs px-3 py-1.5 rounded-full border transition-colors font-medium ${form.partnershipTypes.includes(pt) ? 'bg-tgpu-navy text-white border-tgpu-navy' : 'bg-white text-gray-600 border-gray-200 hover:border-tgpu-navy'}`}
                 >
@@ -217,6 +225,7 @@ export default function RegisterPage() {
               {COUNTRIES.map(c => (
                 <button
                   key={c} type="button"
+                  aria-pressed={form.targetMarkets.includes(c)}
                   onClick={() => set('targetMarkets', toggleArray(form.targetMarkets, c))}
                   className={`text-xs px-3 py-1.5 rounded-full border transition-colors font-medium ${form.targetMarkets.includes(c) ? 'bg-tgpu-gold text-tgpu-navy border-tgpu-gold' : 'bg-white text-gray-600 border-gray-200 hover:border-tgpu-gold'}`}
                 >
@@ -231,7 +240,7 @@ export default function RegisterPage() {
         <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
           <h3 className="font-semibold text-gray-800 text-sm uppercase tracking-wide">Market-Entry Readiness</h3>
           <Field label="Export Readiness *">
-            <select value={form.exportReadiness} onChange={e => set('exportReadiness', e.target.value)} className={INPUT}>
+            <select value={form.exportReadiness} onChange={e => set('exportReadiness', e.target.value as ExportReadiness)} className={INPUT}>
               {READINESS.map(value => <option key={value}>{value}</option>)}
             </select>
           </Field>
@@ -252,7 +261,7 @@ export default function RegisterPage() {
           </Field>
           <Field label="Commercial Capacity / Requirements">
             <input
-              value={form.commercialCapacity}
+              maxLength={300} value={form.commercialCapacity}
               onChange={e => set('commercialCapacity', e.target.value)}
               className={INPUT}
               placeholder="e.g. 20-foot container capacity, 30-day lead time"
@@ -264,25 +273,25 @@ export default function RegisterPage() {
           <h3 className="font-semibold text-gray-800 text-sm uppercase tracking-wide">Contact & Details</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Contact Name">
-              <input value={form.contactName} onChange={e => set('contactName', e.target.value)} className={INPUT} placeholder="Full name" />
+              <input maxLength={120} value={form.contactName} onChange={e => set('contactName', e.target.value)} className={INPUT} placeholder="Full name" />
             </Field>
             <Field label="Contact Email">
-              <input type="email" value={form.contactEmail} onChange={e => set('contactEmail', e.target.value)} className={INPUT} placeholder="email@company.com" />
+              <input type="email" maxLength={254} value={form.contactEmail} onChange={e => set('contactEmail', e.target.value)} className={INPUT} placeholder="email@company.com" />
             </Field>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Field label="Annual Revenue">
-              <input value={form.annualRevenue} onChange={e => set('annualRevenue', e.target.value)} className={INPUT} placeholder="e.g. RM 50M" />
+              <input maxLength={80} value={form.annualRevenue} onChange={e => set('annualRevenue', e.target.value)} className={INPUT} placeholder="e.g. RM 50M" />
             </Field>
             <Field label="Employees">
-              <input value={form.employees} onChange={e => set('employees', e.target.value)} className={INPUT} placeholder="e.g. 200" />
+              <input maxLength={12} value={form.employees} onChange={e => set('employees', e.target.value)} className={INPUT} placeholder="e.g. 200" />
             </Field>
             <Field label="Est. Year">
               <input type="number" value={form.established} onChange={e => set('established', e.target.value)} className={INPUT} placeholder="2010" />
             </Field>
           </div>
           <Field label="Certifications (comma-separated)">
-            <input value={form.certifications} onChange={e => set('certifications', e.target.value)} className={INPUT} placeholder="e.g. ISO 9001, JAKIM Halal, CE Mark" />
+            <input maxLength={1620} value={form.certifications} onChange={e => set('certifications', e.target.value)} className={INPUT} placeholder="e.g. ISO 9001, JAKIM Halal, CE Mark" />
           </Field>
           <Field label="Logo Colour">
             <div className="flex gap-2 flex-wrap">
@@ -314,10 +323,25 @@ export default function RegisterPage() {
 const INPUT = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-tgpu-navy/20 focus:border-tgpu-navy bg-white transition'
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  const id = useId()
+  const field = Children.only(children)
+  if (isValidElement<{ id?: string }>(field) && field.type !== 'div') {
+    return (
+      <div>
+        <label htmlFor={id} className="text-xs font-medium text-gray-600 mb-1.5 block">{label}</label>
+        {cloneElement(field, { id })}
+      </div>
+    )
+  }
   return (
-    <div>
-      <label className="text-xs font-medium text-gray-600 mb-1.5 block">{label}</label>
+    <fieldset>
+      <legend className="text-xs font-medium text-gray-600 mb-1.5">{label}</legend>
       {children}
-    </div>
+    </fieldset>
   )
+}
+
+function splitLabels(value: string): string[] {
+  const labels = value.split(',').map(label => label.trim()).filter(Boolean)
+  return [...new Map(labels.map(label => [label.toLowerCase(), label])).values()]
 }

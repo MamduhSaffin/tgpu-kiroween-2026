@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { Zap, Info, Download, Printer } from 'lucide-react'
 import { COMPANIES } from '../data/companies'
@@ -15,22 +15,14 @@ export default function MatchPage() {
   const preselectedId = (location.state as { companyId?: string } | null)?.companyId
 
   const allCompanies = useMemo(() => [...COMPANIES, ...getCustomCompanies()], [])
-  const [selectedId, setSelectedId] = useState<string>(
-    searchParams.get('company') ?? preselectedId ?? allCompanies[0]?.id ?? ''
-  )
+  const requestedId = searchParams.get('company') ?? preselectedId
+  const requestedCompany = allCompanies.find(company => company.id === requestedId)
+  const selectedCompany = requestedCompany ?? allCompanies[0]
   const [shortlist, setShortlist] = useState<string[]>(getShortlist)
   const [inquireTarget, setInquireTarget] = useState<Company | null>(null)
   const [gradeFilter, setGradeFilter] = useState<'All' | MatchResult['grade']>('All')
   const [sortBy, setSortBy] = useState<'score' | 'name' | 'country'>('score')
-
-  useEffect(() => {
-    const requestedId = searchParams.get('company') ?? preselectedId
-    if (requestedId && allCompanies.some(company => company.id === requestedId)) {
-      setSelectedId(requestedId)
-    }
-  }, [allCompanies, preselectedId, searchParams])
-
-  const selectedCompany = allCompanies.find(c => c.id === selectedId) ?? null
+  const [error, setError] = useState('')
   const matches = useMemo(
     () => (selectedCompany ? computeMatches(selectedCompany, allCompanies) : []),
     [selectedCompany, allCompanies]
@@ -45,14 +37,21 @@ export default function MatchPage() {
   }, [matches, gradeFilter, sortBy])
 
   function handleToggle(id: string) {
-    setShortlist(toggleShortlist(id))
+    try {
+      setShortlist(toggleShortlist(id))
+      setError('')
+    } catch {
+      setError('Could not update the shortlist. Check that browser storage is available.')
+    }
   }
+
+  const ranks = new Map(matches.map((match, index) => [match.company.id, index + 1]))
 
   function exportSummary() {
     if (!selectedCompany) return
     const header = ['Rank', 'Company', 'Country', 'Sector', 'Score', 'Grade', 'Next action']
-    const rows = visibleMatches.map((match, index) => [
-      String(index + 1),
+    const rows = visibleMatches.map(match => [
+      String(ranks.get(match.company.id)),
       match.company.name,
       match.company.country,
       match.company.sector,
@@ -61,7 +60,10 @@ export default function MatchPage() {
       match.recommendedNextAction,
     ])
     const csv = [header, ...rows]
-      .map(row => row.map(value => `"${value.replace(/"/g, '""')}"`).join(','))
+      .map(row => row.map(value => {
+        const safeValue = /^[\s]*[=+@-]|^[\t\r\n]/.test(value) ? "'" + value : value
+        return `"${safeValue.replace(/"/g, '""')}"`
+      }).join(','))
       .join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
     const url = URL.createObjectURL(blob)
@@ -69,14 +71,14 @@ export default function MatchPage() {
     anchor.href = url
     anchor.download = `gcc-match-${selectedCompany.id}.csv`
     anchor.click()
-    URL.revokeObjectURL(url)
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <Zap size={22} className="text-tgpu-gold" /> AI-Assisted Matching
+          <Zap size={22} className="text-tgpu-gold" /> Partner Matching
         </h1>
         <p className="text-gray-500 text-sm mt-1">
           Select a company to see its ranked GCC partner recommendations with score explanations.
@@ -87,10 +89,13 @@ export default function MatchPage() {
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex gap-3 text-sm text-blue-800">
         <Info size={18} className="flex-shrink-0 mt-0.5" />
         <div>
-          <strong>Rule-based prototype, not a trained AI model.</strong> Scores are computed by a transparent
+          <strong>Deterministic compatibility scoring.</strong> Scores are computed by a transparent
           weighted-rule engine across six factors: sector compatibility, product fit, market overlap, partnership alignment, export readiness, and certification alignment. Each recommendation includes a plain-language explanation.
         </div>
       </div>
+
+      {requestedId && !requestedCompany && <p role="status" className="mb-4 text-sm text-amber-800">The requested profile is unavailable in this browser. Showing the sample exporter instead.</p>}
+      {error && <p role="alert" className="mb-4 text-sm text-red-700">{error}</p>}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Company selector */}
@@ -98,10 +103,10 @@ export default function MatchPage() {
           <div className="bg-white rounded-2xl border border-gray-100 p-5 sticky top-24">
             <h2 className="font-semibold text-gray-800 mb-3 text-sm uppercase tracking-wide">Select Company</h2>
             <select
-              value={selectedId}
+              aria-label="Company to match"
+              value={selectedCompany.id}
               onChange={e => {
                 const id = e.target.value
-                setSelectedId(id)
                 setSearchParams({ company: id })
               }}
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-tgpu-navy/20 bg-white mb-4"
@@ -158,7 +163,7 @@ export default function MatchPage() {
           {matches.length === 0 ? (
             <div className="text-center py-16 text-gray-400">
               <Zap size={40} className="mx-auto mb-3 opacity-20" />
-              <p>Select a company to see matches.</p>
+              <p>No complementary companies are available for this profile.</p>
             </div>
           ) : (
             <>
@@ -197,11 +202,16 @@ export default function MatchPage() {
                   </button>
                 </div>
               </div>
-              {visibleMatches.map((result, i) => (
+              {visibleMatches.length === 0 && (
+                <p role="status" className="rounded-xl bg-white p-5 text-sm text-gray-600">
+                  No partners have this grade. <button className="underline" onClick={() => setGradeFilter('All')}>Show all grades</button>
+                </p>
+              )}
+              {visibleMatches.map(result => (
                 <MatchCard
-                  key={result.company.id}
+                  key={selectedCompany.id + ":" + result.company.id}
                   result={result}
-                  rank={i + 1}
+                  rank={ranks.get(result.company.id)!}
                   shortlisted={shortlist.includes(result.company.id)}
                   onToggleShortlist={handleToggle}
                   onInquire={c => setInquireTarget(c)}

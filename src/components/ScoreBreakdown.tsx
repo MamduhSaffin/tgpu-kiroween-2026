@@ -8,14 +8,14 @@ interface Props {
 
 const GRADE_STYLES: Record<MatchResult['grade'], string> = {
   Excellent: 'bg-emerald-500',
-  Strong: 'bg-blue-500',
+  Strong: 'bg-emerald-600',
   Good: 'bg-amber-500',
   Fair: 'bg-gray-400',
 }
 
 const GRADE_TEXT: Record<MatchResult['grade'], string> = {
   Excellent: 'text-emerald-700 bg-emerald-50 border-emerald-200',
-  Strong: 'text-blue-700 bg-blue-50 border-blue-200',
+  Strong: 'text-emerald-800 bg-emerald-50 border-emerald-300',
   Good: 'text-amber-700 bg-amber-50 border-amber-200',
   Fair: 'text-gray-600 bg-gray-50 border-gray-200',
 }
@@ -32,7 +32,7 @@ export default function ScoreBreakdown({ result, expanded = false }: Props) {
             <circle cx="18" cy="18" r="15.9" fill="none" stroke="#E5E7EB" strokeWidth="3" />
             <circle
               cx="18" cy="18" r="15.9" fill="none"
-              stroke={pct >= 80 ? '#10B981' : pct >= 60 ? '#3B82F6' : pct >= 40 ? '#F59E0B' : '#9CA3AF'}
+              stroke={pct >= 80 ? '#10B981' : pct >= 60 ? '#047857' : pct >= 40 ? '#F59E0B' : '#9CA3AF'}
               strokeWidth="3"
               strokeDasharray={`${pct} ${100 - pct}`}
               strokeLinecap="round"

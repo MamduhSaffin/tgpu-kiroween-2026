@@ -88,14 +88,13 @@ export default function MatchPage() {
         <Info size={18} className="flex-shrink-0 mt-0.5" />
         <div>
           <strong>Rule-based prototype, not a trained AI model.</strong> Scores are computed by a transparent
-          weighted-rule engine across four factors: sector compatibility, product fit, market overlap, and
-          partnership alignment. Each recommendation includes a plain-language explanation.
+          weighted-rule engine across six factors: sector compatibility, product fit, market overlap, partnership alignment, export readiness, and certification alignment. Each recommendation includes a plain-language explanation.
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Company selector */}
-        <div className="lg:col-span-1">
+        <div className="min-w-0 lg:col-span-1">
           <div className="bg-white rounded-2xl border border-gray-100 p-5 sticky top-24">
             <h2 className="font-semibold text-gray-800 mb-3 text-sm uppercase tracking-wide">Select Company</h2>
             <select
@@ -155,7 +154,7 @@ export default function MatchPage() {
         </div>
 
         {/* Match results */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="min-w-0 lg:col-span-2 space-y-4">
           {matches.length === 0 ? (
             <div className="text-center py-16 text-gray-400">
               <Zap size={40} className="mx-auto mb-3 opacity-20" />
